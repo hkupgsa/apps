@@ -1,0 +1,18 @@
+
+
+/plan https://docs.google.com/spreadsheets/d/1Mm1g3Vcvvty-kJb0HQkpagtn6ZQrCNF8hvZBFpOoCpg/edit?usp=sharing 302
+/request https://docs.google.com/forms/d/e/1FAIpQLSc788xIW8FYIRgSqvY4tQg8P_nNwAibziXCFvdt2e45IPJQSA/viewform?usp=sf_link
+/drive https://drive.google.com/drive/folders/1OOfuEEYNihITO1RR9w50nRg2c26UYucU
+/group https://groups.google.com/g/it-pgsa
+/web https://hkupgsa.github.io
+
+
+# proxy
+/spreadsheets/*	https://docs.google.com/spreadsheets/:splat	200
+/document/*	https://docs.google.com/document/:splat	200
+/forms/*	https://docs.google.com/forms/:splat	200
+/static/*	https://docs.google.com/static/:splat	200
+/feeds/*	https://spreadsheets.google.com/feeds/:splat	200
+/sheet	id=:id num=:num cell=:cell	https://spreadsheets.google.com/feeds/cells/:id/:num/public/basic/:cell	200
+/_/freebird/*	https://www.gstatic.com/_/freebird/:splat	200
+
