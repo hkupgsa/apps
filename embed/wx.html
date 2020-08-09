@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>WeChat Article Cards Demo</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    </head>
+    <body>
+        <h1>Articles</h1>
+        <div class="container" id="articles" style=" width: 100%; margin: auto;">
+
+
+
+        </div>
+        <script src="index.js"></script>
+        <script>
+            var params = getQueryFromURL(location.href);
+            var articles = 'articles' in params ? params['articles'].split(','): [];
+            var info = {};
+            var li = $('div#articles');
+            function one_card(flag, arr){
+                let [link, image_url, title, summary, extra] = arr;
+                let card = $(`<div data-link="${link}" class="panel" id="#s_${flag}"  style="border-radius: 3%; background: #EEEEEE; width=100%; max-width: 400px;"">`);
+                card.append(`<div class="panel-heading">
+                    <table><tbody><tr>
+                    <td width="10%"><img src="${extra.round_logo || ''}" style=" position: relative; margin: auto; width:90%; "></td>
+                    <td width="55%" align="left"><span>${extra.nickname || ''}</span></td>
+                    <td width="35%" align="right"><span class="publish_time">${extra.publish_date || ''}</span></td>
+                    </tr></tbody></table>
+                </div>`);
+                card.append(`<div class="panel-image" style=" width: 100%; margin-left: auto; margin-right: auto; margin-bottom: 0%;"><img style="width: 100%;" src="${image_url.replace('http://', '//')}"></div>`);
+
+                card.append(`<div class="panel-body" style="margin-top: -5%; padding-bottom:1%;"><h3 style="margin-left:3%; margin-right:3%;">${title}</h3><p style="color: #333333; margin-top: -3%; margin-left:3%; margin-right:3%; margin-bottom: 3%;"><small>${summary}</p></small></div>`);
+                li.append(card);
+                li.append('<div><hr style="width: 100%; max-width: 400px;"></div>');
+
+                $(card).click(function(){
+                    //console.log('clicked!');
+                    window.open($(this).data('link'), '_blank');
+                });
+
+            }
+            for(let ar of articles){
+                console.log('retrieving ', ar);
+                $.ajax('/wx/'+ar).done(function(data){
+                    
+                    let html = $.parseHTML(data, null, true);// keepScripts=true
+                    //console.log(html);
+                    //https://stackoverflow.com/questions/15403600/jquery-not-finding-elements-in-jquery-parsehtml-result
+                    let tmpDom = $('<output>').append(html);
+                    let link = "https://mp.weixin.qq.com/s/"+ar;
+                    let image_url = getMeta('twitter:image', tmpDom);
+                    let title = getMeta('twitter:title', tmpDom);
+                    let summary = getMeta('twitter:description', tmpDom);
+                    let extra = {};
+
+
+                    let publish = $('script:contains("publish_time")', tmpDom).html();
+                    let setting = $('script:contains(round_head_img)', tmpDom).html();
+
+                    var re_publish = /var\s+\w+\s*=\s*"(\d+)",\s*\w+\s*="(\d+)",\s*\w+\s*=\s*"([^"]+)"/g;
+                    var re_logo = /var\s+round_head_img\s*=\s*"([^"]+)"/g;
+                    var re_nickname = /var\s+nickname\s*=\s*"([^"]+)"/g;
+                    
+                    if(! image_url || !title || !summary){
+                        console.log('fail to retrieve ', ar);
+                        return;
+                    }
+                    // get publish time and round logo
+                    let publish_res = re_publish.exec(publish);
+                    let logo_res = re_logo.exec(setting);
+                    let nickname_res = re_nickname.exec(setting);
+                    // console.log(publish_res, logo_res, nickname_res);
+                    if(!!publish_res){
+                        extra.current_time = publish_res[1], extra.publish_time = publish_res[2], extra.publish_date = publish_res[3];
+                    }
+                    if(!!logo_res){
+                        extra.round_logo = logo_res[1].replace('http://', '//');
+
+                    }
+                    if(!!nickname_res){
+                        extra.nickname = nickname_res[1];
+                    }
+                    console.log('success to retrieve ', info[ar] = [link, image_url, title, summary, extra]);
+                    one_card(ar, info[ar]);
+                });
+
+            }
+        </script>
+    </body>
+</html>
