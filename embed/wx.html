@@ -33,11 +33,11 @@
             max-width: 600px;
             margin-left: auto;
             margin-right: auto;
-            margin-bottom: 1%;
+            margin-bottom: 2%;
 
           }
-          .panel.article-card:hover{
-              background: #EEEEEE;
+          .panel-body:hover{
+              background: #DDDDDD;
               outline: 0px solid transparent;
           }
           .panel-heading.article-author td:first-child{
@@ -123,7 +123,7 @@
                     return;//skip
                 }
                 let [link, image_url, title, summary, extra] = arr;
-                let card = $(`<div data-link="${link}" tabindex="-1" class="panel article-card" id="s_${flag}"  >`);
+                let card = $(`<div data-link="${link}" class="panel article-card" id="s_${flag}"  >`);
                 card.append(`<div class="panel-heading article-author">
                     <table><tbody><tr>
                     <td><img src="${extra.round_logo || ''}" style=""></td>
