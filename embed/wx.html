@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">  
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>WeChat Article Cards Demo</title>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -13,16 +14,31 @@
           .container#articles{
               
               width: 100%; 
-              max-width: 540px; 
+              max-width: 600px; 
               margin: auto;
+          }
+          .container#articles h2{
+            text-align: center;
+            color: #111111;
+          }
+          .container#articles hr{
+            width: 100%; 
+            max-width: 600px;
+
           }
           .panel.article-card{
             border-radius: 3%; 
             background: #FFFFFF; 
             width: 98%; 
-            max-width: 500px;
-            margin: auto;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            margin-bottom: 1%;
 
+          }
+          .panel.article-card:hover{
+              background: #EEEEEE;
+              outline: 0px solid transparent;
           }
           .panel-heading.article-author td:first-child{
               padding-left: 2%;
@@ -61,6 +77,7 @@
           .panel-body.article-summary{
             margin-top: -5%; 
             padding-bottom:1%;
+            
           }
           .panel-body.article-summary h3{
             font-size:medium;
@@ -77,6 +94,7 @@
             margin-left:3%; 
             margin-right:3%; 
             
+            
           }
         
         </style>
@@ -84,25 +102,33 @@
     </head>
     <body>
         <div class="container" id="articles">
-            <h1 style="text-align: center;">Articles</h1>
-
-
+            <h2>HKU-PGSA 港大研會</h2>
 
         </div>
+        <div class="container" style="margin: auto;"><small><p style="text-align: center;">
+            <a href="#" style="color: #888888; text-decoration: none;">Follow our WeChat to see more</a>
+        </p></small></div>
         <script src="index.js"></script>
         <script>
+            var version = 'v1';
             var params = getQueryFromURL(location.href);
             var articles = 'articles' in params ? params['articles'].split(','): [];
             var info = {};
             var li = $('div#articles');
+            var check_flag = true;
+            var now_sec = (new Date().getTime()  / 1e3) >> 0;
+            
             function one_card(flag, arr){
+                if(!arr){
+                    return;//skip
+                }
                 let [link, image_url, title, summary, extra] = arr;
-                let card = $(`<div data-link="${link}" class="panel article-card" id="#s_${flag}"  >`);
+                let card = $(`<div data-link="${link}" tabindex="-1" class="panel article-card" id="s_${flag}"  >`);
                 card.append(`<div class="panel-heading article-author">
                     <table><tbody><tr>
                     <td><img src="${extra.round_logo || ''}" style=""></td>
                     <td><span>${extra.nickname || ''}</span></td>
-                    <td><span class="publish_time">${extra.publish_date || ''}</span></td>
+                    <td><span class="publish_time"></span></td>
                     </tr></tbody></table>
                 </div>`);
                 card.append(`<div class="panel-body article-image">
@@ -114,15 +140,47 @@
                     <p>${summary}</p>
                     </div>`);
                 li.append(card);
-                li.append('<div><hr style="width: 100%; max-width: 500px;"></div>');
+                //li.append('<div><hr></div>');
 
-                $(card).click(function(){
+                $(card).find('.panel-body').click(function(){
                     //console.log('clicked!');
-                    window.open($(this).data('link'), '_blank');
+                    window.open(link, '_blank');
                 });
+                let dom_ele = document.querySelector(`#s_${flag} .publish_time`);
+                setPublishTime(now_sec, extra.publish_time, extra.publish_date, dom_ele);
 
             }
+            function checkAll(){
+                if(!check_flag){
+                    return;
+                }
+                check_flag = false;
+                for(let ar of articles){
+                    if(! (ar in info)){
+                        check_flag = true;
+                        break;
+                    }
+                }
+                if(!check_flag){
+                    for(let ar of articles){
+                        one_card(ar, info[ar]);
+                    }
+                }else{
+                    setTimeout(checkAll, 100);  
+                }
+            }
+            // TODO: change to async await
+            setTimeout(checkAll, 200);
+            //window.localStorage.clear();
             for(let ar of articles){
+                // check localStorage
+                let item = window.localStorage.getItem(version+'_s_'+ar);
+                if(!!item){
+                    info[ar] = JSON.parse(item);
+                    console.log('reuse local ', ar);
+                    continue;
+                }
+
                 console.log('retrieving ', ar);
                 $.ajax('/wx/'+ar).done(function(data){
                     
@@ -146,6 +204,7 @@
                     
                     if(! image_url || !title || !summary){
                         console.log('fail to retrieve ', ar);
+                        info[ar] = false;
                         return;
                     }
                     // get publish time and round logo
@@ -154,7 +213,9 @@
                     let nickname_res = re_nickname.exec(setting);
                     // console.log(publish_res, logo_res, nickname_res);
                     if(!!publish_res){
-                        extra.current_time = publish_res[1], extra.publish_time = publish_res[2], extra.publish_date = publish_res[3];
+                        extra.current_time = publish_res[1]; 
+                        extra.publish_time = publish_res[2]; 
+                        extra.publish_date = publish_res[3];
                     }
                     if(!!logo_res){
                         extra.round_logo = logo_res[1].replace('http://', '//');
@@ -163,8 +224,11 @@
                     if(!!nickname_res){
                         extra.nickname = nickname_res[1];
                     }
-                    console.log('success to retrieve ', info[ar] = [link, image_url, title, summary, extra]);
-                    one_card(ar, info[ar]);
+                    item = [link, image_url, title, summary, extra];
+                    info[ar] = item;
+                    window.localStorage.setItem(version+'_s_'+ar, JSON.stringify(item));
+                    console.log('success retrieved ', ar);
+                    
                 });
 
             }
