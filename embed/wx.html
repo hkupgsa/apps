@@ -22,6 +22,8 @@
             var version = 'v1';
             var params = getQueryFromURL(location.href);
             var articles = 'articles' in params ? params['articles'].split(','): [];
+            var heading = 'heading' in params ? decodeURIComponent(params['heading']): 'HKU-PGSA 港大研會';
+            $('#articles>h2').html(heading);
             var info = {};
             var li = $('div#articles');
             var check_flag = true;
