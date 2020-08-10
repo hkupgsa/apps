@@ -1,11 +1,6 @@
-var _pg = _pg || {}; // config object
-_pg.sec = _pg.sec || 'h'; // default section home;
-_pg.ver = _pg.ver || 'v1.0'; // default version 1; 
-_pg.enc = _pg.enc || {}; // encryption keys;
-_pg.sep = "_"; _pg.ver_sep = ".";
+// Utilities
 
 window.opTime = (scale) => (new Date().getTime() / (scale ||  1e3) ) >> 0;
-_pg.now = opTime();
 
 window.encF = function(plain, key){ // assuming string input
     if(!key){
@@ -14,12 +9,64 @@ window.encF = function(plain, key){ // assuming string input
     return plain; // TODO: AES CBC
 }
 
+window.getQueryFromURL = function(url) {
+    url = url || 'https://example.hku.hk/s?a=b#rd'; 
+    let tmp = url.split('?'),
+        query = (tmp[1] || "").split('#')[0].split('&'),
+        params = {};
+    for (let i=0; i<query.length; i++) {
+        let arg = query[i].split('=');
+        params[arg[0]] = arg[1];
+    }
+   
+    return params;
+};
+
+window.getMeta = function(name, dom){
+   if(typeof $ == 'undefined'){
+       return null;
+   }
+
+   return $(`meta[property="${name}"]`, dom).attr('content');
+}
+
+// from WeChat
+window.setPublishTime = function(e,t,s,o){ // now:secs, publish:secs, date_str, dom_element
+    var n="",i=86400,a=new Date(1e3*e),d=1*t,f=s||"";
+    a.setHours(0),a.setMinutes(0),a.setSeconds(0);
+    var r=a.getTime()/1e3;
+    a.setDate(1),a.setMonth(0);
+    var l=a.getTime()/1e3;
+    if(d>=r)n="Today";
+    else if(d>=r-i)n="Yesterday";
+    else if(d>=r-2*i)n="2 days ago";
+    else if(d>=r-3*i)n="3 days ago";
+    else if(d>=r-4*i)n="4 days ago";
+    else if(d>=r-5*i)n="5 days ago";
+    else if(d>=r-6*i)n="6 days ago";
+    else if(d>=r-14*i)n="1 week ago";
+    else if(d>=l){
+    var c=f.split("-");
+    n="%s/%s".replace("%s",parseInt(c[1],10)).replace("%s",parseInt(c[2],10));
+    }else n=f;
+    o&&(o.innerText=n,setTimeout(function(){
+    o.onclick=function(){
+    o.innerText=f;
+    };
+    },10));
+}
+
+
+// Namespace _pg
+
+var _pg = _pg || {}; // config object
+
 /* Usage: 
       (1) store(key) - get value
       (2) store(key, value, -1) - set permanent, public value
       (3) store(key, value, ttl, enc_code) - set encrypted value using _pg.enc[enc_code]
 */
-window.store = function(_key, value, _ttl, _enc){
+_pg.store = function(_key, value, _ttl, _enc){
     // key => { sec, val, exp, enc }
     var storage = window.localStorage;
     let key = [_pg.ver, _pg.sec, _key].join(_pg.sep);
@@ -60,7 +107,7 @@ window.store = function(_key, value, _ttl, _enc){
         if(_enc && _pg.enc[_enc]){ // encryption
             _val = encF(JSON.stringify(_val), _pg.enc[_enc]);
         }
-        var _ttl = _ttl || 86400; // default one day;
+        _ttl = _ttl || 86400; // default one day;
         //console.log('set local ', _val);
 
         storage.setItem(
@@ -76,7 +123,7 @@ window.store = function(_key, value, _ttl, _enc){
     }
 }
 
-window.purgeStore = function(_ver){
+_pg.purgeStore = function(_ver){
     var storage = window.localStorage;
     
     let getVer = (ver)=> ver.substr(1).split(_pg.ver_sep).map((e)=>parseInt(e));
@@ -91,56 +138,24 @@ window.purgeStore = function(_ver){
      });
 }
 
-window.getQueryFromURL = function(url) {
-    url = url || 'https://example.hku.hk/s?a=b#rd'; 
-    let tmp = url.split('?'),
-        query = (tmp[1] || "").split('#')[0].split('&'),
-        params = {};
-    for (let i=0; i<query.length; i++) {
-        let arg = query[i].split('=');
-        params[arg[0]] = arg[1];
+_pg.init = function(){
+    _pg.sec = _pg.sec || 'h'; // default section home;
+    _pg.ver = _pg.ver || 'v1.0'; // default version 1; 
+    _pg.enc = _pg.enc || {}; // encryption keys;
+    _pg.sep = ":"; _pg.ver_sep = ".";
+    _pg.now = opTime();
+    if(_pg.refresh){
+    window.localStorage.clear();
+    }else if(_pg.purge){
+        _pg.purgeStore(_pg.ver);
     }
-   
-    return params;
-};
-
-window.getMeta = function(name, dom){
-   if(typeof $ == 'undefined'){
-       return null;
-   }
-
-   return $(`meta[property="${name}"]`, dom).attr('content');
-}
-
-window.setPublishTime = function(e,t,s,o){ // now:secs, publish:secs, date_str, dom_element
-    var n="",i=86400,a=new Date(1e3*e),d=1*t,f=s||"";
-    a.setHours(0),a.setMinutes(0),a.setSeconds(0);
-    var r=a.getTime()/1e3;
-    a.setDate(1),a.setMonth(0);
-    var l=a.getTime()/1e3;
-    if(d>=r)n="Today";
-    else if(d>=r-i)n="Yesterday";
-    else if(d>=r-2*i)n="2 days ago";
-    else if(d>=r-3*i)n="3 days ago";
-    else if(d>=r-4*i)n="4 days ago";
-    else if(d>=r-5*i)n="5 days ago";
-    else if(d>=r-6*i)n="6 days ago";
-    else if(d>=r-14*i)n="1 week ago";
-    else if(d>=l){
-    var c=f.split("-");
-    n="%s/%s".replace("%s",parseInt(c[1],10)).replace("%s",parseInt(c[2],10));
-    }else n=f;
-    o&&(o.innerText=n,setTimeout(function(){
-    o.onclick=function(){
-    o.innerText=f;
-    };
-    },10));
+    return true;
 }
 
 
-window.one_card = function(arr){
+_pg.one_card = function(arr){
     
-    if(!arr){
+    if(!arr || arr.length != 5){
         console.log('skip ');
         return;//skip
     }
@@ -155,14 +170,19 @@ window.one_card = function(arr){
         <td><span class="publish_time"></span></td>
         </tr></tbody></table>
     </div>`);
-    card.append(`<div class="panel-body article-image">
-        <img src="${image_url.replace('http://', '//')}">
-        </div>`);
+    card.append(`
+        <div class="panel-body">
+            <div class="article-image">
+            <img src="${image_url.replace('http://', '//')}">
+            </div>
+            <div class="article-summary">
+            <h3>${title}</h3>
+            <p>${summary}</p>
+            </div>
+        </div>
+    `);
 
-    card.append(`<div class="panel-body article-summary">
-        <h3>${title}</h3>
-        <p>${summary}</p>
-        </div>`);
+    card.append(``);
     
 
     $(card).find('.panel-body').click(function(){
@@ -176,33 +196,25 @@ window.one_card = function(arr){
 
 }
 
-async function load_articles(li, info){
+_pg.load_articles = async function (li, info){
     // callback
     let t0 = opTime(1);
     console.log('loading articles ...');
     for await (arr of info){// in order
-        let card = one_card(arr);  
-        li.append(card);
-        //li.append('<div><hr></div>');
+        let card = _pg.one_card(arr);  
+        if(!!card){
+            li.append(card);
+            //li.append('<div><hr></div>');
+        }
+        
     }
     console.log('load time: ', (opTime(1) - t0)/1e3, ' seconds');
     return true;
 
 }
 
-async function retrieveArticle(fid, ttl){
-    ttl = ttl || -1;  // default forever;
-    // check localStorage
-    let item = store(fid);
-    if(item != null){
-        console.log('reuse local ', fid);
-        return new Promise((resolve)=>resolve(item));
-    }
-
-    return $.ajax('/wx/'+fid).then(function(data){
-        console.log('retrieving ', fid);
-        
-        let html = $.parseHTML(data, null, true);// keepScripts=true
+_pg.parseArticle = function(data){
+    let html = $.parseHTML(data, null, true);// keepScripts=true
         //console.log(html);
         //https://stackoverflow.com/questions/15403600/jquery-not-finding-elements-in-jquery-parsehtml-result
         let tmpDom = $('<output>').append(html);
@@ -210,7 +222,6 @@ async function retrieveArticle(fid, ttl){
         let title = getMeta('twitter:title', tmpDom);
         let summary = getMeta('twitter:description', tmpDom);
         let extra = {};
-
 
         let publish = $('script:contains("publish_time")', tmpDom).html();
         let setting = $('script:contains(round_head_img)', tmpDom).html();
@@ -221,7 +232,6 @@ async function retrieveArticle(fid, ttl){
         
         if(! image_url || !title || !summary){
             console.log('fail to retrieve ', fid);
-            //info[ar] = false;
             return null;
         }
         image_url = image_url.  replace('http://', '//');
@@ -241,9 +251,26 @@ async function retrieveArticle(fid, ttl){
         if(!!nickname_res){
             extra.nickname = nickname_res[1];
         }
-        item = [fid, image_url, title, summary, extra];
-        store(fid, item, ttl);// forever
-        console.log('success retrieved ', fid);
+        return [image_url, title, summary, extra];
+}
+
+_pg.retrieveArticle = async function (fid, ttl){
+    ttl = ttl || -1;  // default forever;
+    // check localStorage
+    let item = _pg.store(fid);
+    if(item != null){
+        console.log('reuse local ', fid);
+        return new Promise((resolve)=>resolve(item));
+    }
+
+    return $.ajax('/wx/'+fid).then(function(data){
+        console.log('retrieve article ', fid);
+        item = _pg.parseArticle(data);
+        if(!!item){
+            item.unshift(fid);
+            _pg.store(fid, item, ttl);// forever
+            console.log('successfully retrieved ', fid);
+        }
         return item;
         
     });}

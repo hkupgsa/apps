@@ -6,7 +6,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>WeChat Article Cards Demo</title>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-        <link type="text/css" rel="stylesheet" href="index.css">
+        <link type="text/css" rel="stylesheet" href="/css/wx-card.css">
 
     </head>
     <body>
@@ -17,29 +17,26 @@
         <div class="container article-foot" style="margin: auto;"><p>
             <a href="#" >Follow our WeChat to see more</a>
         </p></div>
-        <script src="index.js"></script>
+        <script src="/js/pgsa-apps.js"></script>
         <script>
-            
-            _pg.sec = 's'; _pg.ver = 'v1.0';
-            _pg.enc['dummy'] = 'secret';
+            var _pg = _pg || {};
+            _pg.sec = 's'; _pg.ver = 'v1.0.1';
             _pg.refresh = false; // true; //
             _pg.purge = true;
+            _pg.init &&  (_pg.ready = _pg.init()) &&  (_pg.enc['dummy'] = 'secret');
+            
 
             var params = getQueryFromURL(location.href);
             var articles = 'articles' in params ? params['articles'].split(','): [];
             var heading = 'heading' in params ? decodeURIComponent(params['heading']): 'HKU-PGSA 港大研會';
-            $('.articles>h2').html(heading);
+            document.querySelector('.articles>h2').innerHTML = heading;
 
-            var li = $('div.articles');
-            let load_time = 0;
-
-            if(_pg.refresh){
-                window.localStorage.clear();
-            }else if(_pg.purge){
-                purgeStore(_pg.ver);
+            const li = $('div.articles');
+            if(_pg.ready){
+                const info = articles.map((e)=>_pg.retrieveArticle(e));
+                _pg.load_articles(li, info);
             }
-            const info = articles.map((e)=>retrieveArticle(e));
-            load_articles(li, info);
+            
 
 
         </script>

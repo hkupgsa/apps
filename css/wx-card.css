@@ -73,21 +73,23 @@ position: relative;
 margin: auto; 
 width:80%; 
 }
-.panel-body.article-image{
+.panel-body .article-image{
 width: 100%; 
 margin-left: auto; 
 margin-right: auto; 
 margin-bottom: 0%;
+padding-bottom: 0%;
 }
-.panel-body.article-image img{
+.article-image img{
 width: 100%;
+margin-bottom: 0%;
 }
-.panel-body.article-summary{
+.article-summary{
 margin-top: -5%; 
 padding-bottom:0.5%;
 
 }
-.panel-body.article-summary h3{
+.article-summary h3{
 font-size:medium;
 color:#111111;
 padding-top: 3%;
@@ -95,7 +97,7 @@ margin-left:3%;
 margin-right:3%;
 
 }
-.panel-body.article-summary p{
+.article-summary p{
 color: #888888; 
 font-size: small;
 margin-top: -2%; 

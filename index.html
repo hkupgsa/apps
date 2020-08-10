@@ -11,8 +11,24 @@
 
 <h3> Hello, Postgraduate Student Association, The University of Hong Kong </h3>
 
-<a href="/embed/wx.html?articles=6XPblKFlEKAxWcJS5pluTA,guLLBiUdqez1pINap5gJfg,BAB3pN9oml-HIto3hNYWPA,bZb9FqXHxIRctwtUwq-krg,jbkRVOb93StUdoeWbmYt7Q,z_TKPDD0PLNRCaSCfmLudA">
+<a id="wx-embed" href="/embed/wx.html?articles=6XPblKFlEKAxWcJS5pluTA,guLLBiUdqez1pINap5gJfg,BAB3pN9oml-HIto3hNYWPA,bZb9FqXHxIRctwtUwq-krg,jbkRVOb93StUdoeWbmYt7Q,z_TKPDD0PLNRCaSCfmLudA">
     WeChat Articles Demo
 </a>
+<script>
+    let articles = [
+        "6XPblKFlEKAxWcJS5pluTA", 
+        "guLLBiUdqez1pINap5gJfg", 
+        "BAB3pN9oml-HIto3hNYWPA",  
+        "jbkRVOb93StUdoeWbmYt7Q", 
+        "z_TKPDD0PLNRCaSCfmLudA", 
+        "bZb9FqXHxIRctwtUwq-krg",
+        "LdD0d5OfJeP71s8r0ffVPg",
+        "1gW4_9t_rVeKJvtdE_wRqg",
+        "ecYxX7l2myjWtoLN8i9X-g",
+        "ZUPyHUKYlt_BDDoAoZiBUw",
+    ];
+    document.getElementById('wx-embed').href = "/embed/wx?sep=,&articles="+articles.join(',');
+    
+</script>
 </body>
 </html>
