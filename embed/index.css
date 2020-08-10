@@ -10,21 +10,30 @@ body::-webkit-scrollbar {
 }
 
 
-.container#articles{
+.container.articles{
 
 width: 100%; 
 max-width: 600px;   
 margin: auto;
 }
-.container#articles h2{
+.container.articles h2{
 text-align: center;
 color: #111111;
 }
-.container#articles hr{
+.container.articles hr{
 width: 100%; 
 max-width: 600px;
 
 }
+.container.article-foot p{
+    text-align: center;
+    font-size: small;
+}
+.container.article-foot a{
+    color: #888888; 
+    text-decoration: none;
+}
+
 .panel.article-card{
 border-radius: 3%; 
 background: #FFFFFF; 
@@ -92,6 +101,5 @@ font-size: small;
 margin-top: -2%; 
 margin-left:3%; 
 margin-right:3%; 
-
 
 }

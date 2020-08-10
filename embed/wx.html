@@ -10,139 +10,38 @@
 
     </head>
     <body>
-        <div class="container" id="articles">
+        <div class="container articles">
             <h2>HKU-PGSA 港大研會</h2>
 
         </div>
-        <div class="container" style="margin: auto;"><small><p style="text-align: center;">
-            <a href="#" style="color: #888888; text-decoration: none;">Follow our WeChat to see more</a>
-        </p></small></div>
+        <div class="container article-foot" style="margin: auto;"><p>
+            <a href="#" >Follow our WeChat to see more</a>
+        </p></div>
         <script src="index.js"></script>
         <script>
-            var version = 'v1';
+            
+            _pg.sec = 's'; _pg.ver = 'v1.0';
+            _pg.enc['dummy'] = 'secret';
+            _pg.refresh = false; // true; //
+            _pg.purge = true;
+
             var params = getQueryFromURL(location.href);
             var articles = 'articles' in params ? params['articles'].split(','): [];
             var heading = 'heading' in params ? decodeURIComponent(params['heading']): 'HKU-PGSA 港大研會';
-            $('#articles>h2').html(heading);
-            var info = {};
-            var li = $('div#articles');
-            var check_flag = true;
-            var now_sec = (new Date().getTime()  / 1e3) >> 0;
-            
-            function one_card(flag, arr){
-                if(!arr){
-                    return;//skip
-                }
-                let [link, image_url, title, summary, extra] = arr;
-                let card = $(`<div data-link="${link}" class="panel article-card" id="s_${flag}"  >`);
-                card.append(`<div class="panel-heading article-author">
-                    <table><tbody><tr>
-                    <td><img src="${extra.round_logo || ''}" style=""></td>
-                    <td><span>${extra.nickname || ''}</span></td>
-                    <td><span class="publish_time"></span></td>
-                    </tr></tbody></table>
-                </div>`);
-                card.append(`<div class="panel-body article-image">
-                    <img src="${image_url.replace('http://', '//')}">
-                    </div>`);
+            $('.articles>h2').html(heading);
 
-                card.append(`<div class="panel-body article-summary">
-                    <h3>${title}</h3>
-                    <p>${summary}</p>
-                    </div>`);
-                li.append(card);
-                //li.append('<div><hr></div>');
+            var li = $('div.articles');
+            let load_time = 0;
 
-                $(card).find('.panel-body').click(function(){
-                    //console.log('clicked!');
-                    window.open(link, '_blank');
-                });
-                let dom_ele = document.querySelector(`#s_${flag} .publish_time`);
-                setPublishTime(now_sec, extra.publish_time, extra.publish_date, dom_ele);
-
+            if(_pg.refresh){
+                window.localStorage.clear();
+            }else if(_pg.purge){
+                purgeStore(_pg.ver);
             }
-            function checkAll(){
-                if(!check_flag){
-                    return;
-                }
-                check_flag = false;
-                for(let ar of articles){
-                    if(! (ar in info)){
-                        check_flag = true;
-                        break;
-                    }
-                }
-                if(!check_flag){
-                    for(let ar of articles){
-                        one_card(ar, info[ar]);
-                    }
-                }else{
-                    setTimeout(checkAll, 100);  
-                }
-            }
-            // TODO: change to async await
-            setTimeout(checkAll, 200);
-            //window.localStorage.clear();
-            for(let ar of articles){
-                // check localStorage
-                let item = window.localStorage.getItem(version+'_s_'+ar);
-                if(!!item){
-                    info[ar] = JSON.parse(item);
-                    console.log('reuse local ', ar);
-                    continue;
-                }
-
-                console.log('retrieving ', ar);
-                $.ajax('/wx/'+ar).done(function(data){
-                    
-                    let html = $.parseHTML(data, null, true);// keepScripts=true
-                    //console.log(html);
-                    //https://stackoverflow.com/questions/15403600/jquery-not-finding-elements-in-jquery-parsehtml-result
-                    let tmpDom = $('<output>').append(html);
-                    let link = "https://mp.weixin.qq.com/s/"+ar;
-                    let image_url = getMeta('twitter:image', tmpDom);
-                    let title = getMeta('twitter:title', tmpDom);
-                    let summary = getMeta('twitter:description', tmpDom);
-                    let extra = {};
+            const info = articles.map((e)=>retrieveArticle(e));
+            load_articles(li, info);
 
 
-                    let publish = $('script:contains("publish_time")', tmpDom).html();
-                    let setting = $('script:contains(round_head_img)', tmpDom).html();
-
-                    var re_publish = /var\s+\w+\s*=\s*"(\d+)",\s*\w+\s*="(\d+)",\s*\w+\s*=\s*"([^"]+)"/g;
-                    var re_logo = /var\s+round_head_img\s*=\s*"([^"]+)"/g;
-                    var re_nickname = /var\s+nickname\s*=\s*"([^"]+)"/g;
-                    
-                    if(! image_url || !title || !summary){
-                        console.log('fail to retrieve ', ar);
-                        info[ar] = false;
-                        return;
-                    }
-                    // get publish time and round logo
-                    let publish_res = re_publish.exec(publish);
-                    let logo_res = re_logo.exec(setting);
-                    let nickname_res = re_nickname.exec(setting);
-                    // console.log(publish_res, logo_res, nickname_res);
-                    if(!!publish_res){
-                        extra.current_time = publish_res[1]; 
-                        extra.publish_time = publish_res[2]; 
-                        extra.publish_date = publish_res[3];
-                    }
-                    if(!!logo_res){
-                        extra.round_logo = logo_res[1].replace('http://', '//');
-
-                    }
-                    if(!!nickname_res){
-                        extra.nickname = nickname_res[1];
-                    }
-                    item = [link, image_url, title, summary, extra];
-                    info[ar] = item;
-                    window.localStorage.setItem(version+'_s_'+ar, JSON.stringify(item));
-                    console.log('success retrieved ', ar);
-                    
-                });
-
-            }
         </script>
     </body>
 </html>
