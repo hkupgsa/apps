@@ -61,6 +61,13 @@ window.setPublishTime = function(e,t,s,o){ // now:secs, publish:secs, date_str, 
 
 var _pg = _pg || {}; // config object
 
+
+_pg.log = function(...args){
+    if(_pg.debug){
+        console.log(...args);
+    }
+}
+
 /* Usage: 
       (1) store(key) - get value
       (2) store(key, value, -1) - set permanent, public value
@@ -144,12 +151,43 @@ _pg.init = function(){
     _pg.enc = _pg.enc || {}; // encryption keys;
     _pg.sep = ":"; _pg.ver_sep = ".";
     _pg.now = opTime();
+    _pg.debug = location.origin.match(/:\/\/localhost/)?true:false;
     if(_pg.refresh){
     window.localStorage.clear();
     }else if(_pg.purge){
         _pg.purgeStore(_pg.ver);
     }
     return true;
+}
+
+_pg.allow_orders = [null, 'ascending', 'descending'];
+
+_pg.reorder = function(order, parent, sel, attr){
+    // order in {null, latest, oldest}
+    if(_pg.allow_orders.indexOf(order)<0){
+        _pg.log('unsupported order ', order);
+        return false; // ignore unsupported order
+    }
+    parent = $(parent);
+    let eles = parent.children(sel);
+    let vals = eles.map(function(){return $(this).data(attr)}).get().map(
+           (e,i)=>[parseInt(e), i]);
+    _pg.log('before sorting: ',vals.slice());
+    if(order == 'ascending'){
+        vals.sort((a,b)=>a[0]-b[0]);
+        
+    }else if(order == 'descending'){
+        vals.sort((a,b)=>b[0]-a[0]);
+    }else{
+        return false;
+    }
+    _pg.log('sorted to ', vals);
+    vals.forEach((e,i)=>{
+        parent.append(eles[e[1]]);
+    });
+
+
+
 }
 
 
@@ -162,7 +200,7 @@ _pg.one_card = function(arr){
     let [fid, image_url, title, summary, extra] = arr;
     console.log('loading ', fid);
     let link = "https://mp.weixin.qq.com/s/"+fid;
-    let card = $(`<div data-link="${link}" class="panel article-card" id="s_${fid}"  >`);
+    let card = $(`<div data-link="${link}" data-t="${extra.publish_time}" class="panel article-card" id="s_${fid}"  >`);
     card.append(`<div class="panel-heading article-author">
         <table><tbody><tr>
         <td><img src="${extra.round_logo || ''}" style=""></td>
@@ -181,16 +219,14 @@ _pg.one_card = function(arr){
             </div>
         </div>
     `);
-
-    card.append(``);
     
 
     $(card).find('.panel-body').click(function(){
-        //console.log('clicked!');
+        _pg.log('clicked!');
         window.open(link, '_blank');
     });
     let dom_ele = card[0].querySelector(`#s_${fid} .publish_time`);
-    //console.log(dom_ele);
+    //_pg.log(dom_ele);
     setPublishTime(_pg.now, extra.publish_time, extra.publish_date, dom_ele);
     return card;
 
@@ -201,13 +237,22 @@ _pg.load_articles = async function (li, info){
     let t0 = opTime(1);
     console.log('loading articles ...');
     for await (arr of info){// in order
-        let card = _pg.one_card(arr);  
-        if(!!card){
-            li.append(card);
-            //li.append('<div><hr></div>');
+        try{
+            let card = _pg.one_card(arr);  
+            if(!!card){
+                li.append(card);
+                //li.append('<div><hr></div>');
+            }
+
+        }catch(e){
+            console.log('error skip ', arr, e);
         }
         
+        
     }
+    if(_pg.order && _pg.reorder){
+        _pg.reorder(_pg.order, li, '.article-card', 't');
+    } 
     console.log('load time: ', (opTime(1) - t0)/1e3, ' seconds');
     return true;
 
@@ -215,7 +260,6 @@ _pg.load_articles = async function (li, info){
 
 _pg.parseArticle = function(data){
     let html = $.parseHTML(data, null, true);// keepScripts=true
-        //console.log(html);
         //https://stackoverflow.com/questions/15403600/jquery-not-finding-elements-in-jquery-parsehtml-result
         let tmpDom = $('<output>').append(html);
         let image_url = getMeta('twitter:image', tmpDom);
@@ -231,7 +275,8 @@ _pg.parseArticle = function(data){
         var re_nickname = /var\s+nickname\s*=\s*"([^"]+)"/g;
         
         if(! image_url || !title || !summary){
-            console.log('fail to retrieve ', fid);
+            console.log('fail to retrieve ');
+            _pg.log(html);
             return null;
         }
         image_url = image_url.  replace('http://', '//');
@@ -239,7 +284,7 @@ _pg.parseArticle = function(data){
         let publish_res = re_publish.exec(publish);
         let logo_res = re_logo.exec(setting);
         let nickname_res = re_nickname.exec(setting);
-        // console.log(publish_res, logo_res, nickname_res);
+        // _pg.log(publish_res, logo_res, nickname_res);
         if(!!publish_res){
             extra.retrieve_time = publish_res[1]; 
             extra.publish_time = publish_res[2]; 
@@ -273,5 +318,8 @@ _pg.retrieveArticle = async function (fid, ttl){
         }
         return item;
         
+    }).catch(function(err){
+        console.log('fail to retrieve ', fid, err);
+        return null;
     });}
 

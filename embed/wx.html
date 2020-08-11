@@ -4,14 +4,18 @@
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">  
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>WeChat Article Cards Demo</title>
+        <title>HKU-PGSA WeChat Articles</title>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
         <link type="text/css" rel="stylesheet" href="/css/wx-card.css">
 
     </head>
     <body>
         <div class="container articles">
-            <h2>HKU-PGSA 港大研會</h2>
+            <div class="articles-heading">
+                <h2>HKU-PGSA 港大研會</h2>
+                <div class="spinner"></div>
+            </div>
+            
 
         </div>
         <div class="container article-foot" style="margin: auto;"><p>
@@ -25,11 +29,15 @@
             _pg.purge = true;
             _pg.init &&  (_pg.ready = _pg.init()) &&  (_pg.enc['dummy'] = 'secret');
             
+            
 
             var params = getQueryFromURL(location.href);
-            var articles = 'articles' in params ? params['articles'].split(','): [];
-            var heading = 'heading' in params ? decodeURIComponent(params['heading']): 'HKU-PGSA 港大研會';
-            document.querySelector('.articles>h2').innerHTML = heading;
+            var _sep = 'sep' in params? params['sep']: ',';
+            var articles = 'articles' in params ? params['articles'].split(_sep): [];
+            _pg.heading = 'heading' in params ? decodeURIComponent(params['heading']): 'HKU-PGSA 港大研會';
+            _pg.order = 'order' in params? params['order']: 'descending';
+            
+            document.querySelector('.articles h2').innerHTML = _pg.heading;
 
             const li = $('div.articles');
             if(_pg.ready){

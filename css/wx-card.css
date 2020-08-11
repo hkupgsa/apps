@@ -20,6 +20,12 @@ margin: auto;
 text-align: center;
 color: #111111;
 }
+.articles > .articles-heading:last-child .spinner::after{
+  display: flex;
+  justify-content: center;
+  content: url(/css/ajax-loader.gif);
+}
+
 .container.articles hr{
 width: 100%; 
 max-width: 600px;
@@ -32,6 +38,7 @@ max-width: 600px;
 .container.article-foot a{
     color: #888888; 
     text-decoration: none;
+    outline: 0px solid transparent;
 }
 
 .panel.article-card{
