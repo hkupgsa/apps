@@ -37,32 +37,49 @@
             var articles = 'articles' in params ? params['articles'].split(_sep): [];
             _pg.heading = 'heading' in params ? decodeURIComponent(params['heading']): 'HKU-PGSA 港大研會';
             _pg.order = 'order' in params? params['order']: 'descending';
-            _pg.limit = 'limit' in params? params['limit']: 0;
+            _pg.limit = 'limit' in params? params['limit']: 0;// limit to last a few articles
             
             document.querySelector('.articles h2').innerHTML = _pg.heading;
 
             const li = $('div.articles');
+            _pg.lazy_lock = false;
             if(_pg.ready){
-                let info;
+                let reused = null;
                 if(sheet_json.length == 3){
+                    reused = _pg.store(sheet_json.join(','));
+                    if(reused != null){
+                        _pg.log('resued sheet data', reused);
+                        articles = reused.split(',');
+                    }
                     _pg.log('auto load from sheet ...');
                     let [ss_id, s_num, cell] = sheet_json;
+                    // async update after lazy load
                     $.ajax(`/feeds/cells/${ss_id}/${s_num}/public/basic/${cell}?alt=json`).then((data)=>{
                         articles = data.entry.content.$t.split(',');
                         articles = articles.filter((e,i,arr)=>arr.indexOf(e)==i);
                         _pg.log('obtained unique ', articles);
-                        if(_pg.limit>0){
-                            articles = articles.slice(-_pg.limit);
+                        if(reused != articles.join(',')){
+                            reused = articles.join(',');
+                            _pg.log('sheet json with update');
+                            _pg.store(sheet_json.join(','), reused, 86400*2);// update value, expire in 2 days
+                            _pg.load_articles(
+                                li, 
+                                (_pg.limit>0? articles.slice(-_pg.limit): articles).map((e)=>_pg.retrieveArticle(e))
+                            );
+                        }else{
+                            _pg.log('sheet json without update');
+                            _pg.store(sheet_json.join(','), reused, 86400*2);// refresh time, expire in 2 days
                         }
-                        info = articles.map((e)=>_pg.retrieveArticle(e));
-                        _pg.load_articles(li, info);
-                        
 
                     }).catch((err)=>[]);
-                }else{
-                    info = articles.map((e)=>_pg.retrieveArticle(e));
-                    _pg.load_articles(li, info);
+
                 }
+                _pg.load_articles(
+                    li, 
+                    (_pg.limit>0? articles.slice(-_pg.limit): articles).map((e)=>_pg.retrieveArticle(e)),
+                    true // check lock
+                );
+                
                 
             }
             

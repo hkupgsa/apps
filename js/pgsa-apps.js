@@ -170,6 +170,7 @@ _pg.reorder = function(order, parent, sel, attr){
     }
     parent = $(parent);
     let eles = parent.children(sel);
+    // TODO: deduplicate here? detect identical
     let vals = eles.map(function(){return $(this).data(attr)}).get().map(
            (e,i)=>[parseInt(e), i]);
     _pg.log('before sorting: ',vals.slice());
@@ -233,14 +234,24 @@ _pg.one_card = function(arr){
 
 }
 
-_pg.load_articles = async function (li, info){
+_pg.load_articles = async function (li, info, check_lock){
     // callback
     let t0 = opTime(1);
+    // remove old articles if any
+    if(!check_lock){ // not lazy loading
+        _pg.lazy_lock = true; // lock unfinished lazy loading
+        li.children('.article-card').remove();
+    }
+    
     console.log('loading articles ...');
     for await (arr of info){// in order
         try{
             let card = _pg.one_card(arr);  
             if(!!card){
+                if(check_lock && _pg.lazy_lock){
+                    console.log('abort lazy loading');
+                    return false; 
+                } // there may still be race condition here ...
                 li.append(card);
                 //li.append('<div><hr></div>');
             }
