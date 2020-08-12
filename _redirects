@@ -25,3 +25,5 @@
 /wx/* https://mp.weixin.qq.com/s/:splat 200
 /sou type=:t query=:q https://weixin.sogou.com/weixin?type=:t&query=:q 200
 
+/embed/wx_latest /embed/wx?limit=10&json=1P0GRW6d2feNSB-ouWQ4U3J3vdcmP4pDat_XjqhlRnHE,1,R1C4 302
+

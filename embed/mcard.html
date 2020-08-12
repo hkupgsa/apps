@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">  
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>PGSA Membership Card</title>
+        <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+        <link type="text/css" rel="stylesheet" href="/css/wx-card.css">
+
+    </head>
+    <body>
+        <div class="container mcard">
+            <div class="mcard-heading">
+                <h2>HKU-PGSA 港大研會</h2>
+                <div class="spinner"></div>
+            </div>
+            <div class="mcard-body">
+                <div class="canvas-wrapper" id="mcard" style="background: white; width: 100%; max-width: 500px;">
+                    <canvas width="500"  height="350" style="width: 100%;"></canvas>
+                </div>
+            </div>
+            
+
+        </div>
+       
+        <script src="/js/pgsa-apps.js"></script>
+        <script>
+            var _pg = _pg || {};
+            _pg.sec = 's'; _pg.ver = 'v1.0.1';
+            _pg.refresh = false; // true; //
+            _pg.purge = true;
+            _pg.init &&  (_pg.ready = _pg.init()) &&  (_pg.enc['dummy'] = 'secret');
+
+            _pg.card_styles = {
+                'default': {
+                    background: {
+                        path: '/css/card-default.jpg',
+                        width: 1518, height: 957,
+                        // other dimensions
+
+                    },
+                    font: {
+                        path: '/css/card-HALTER.ttf'
+                    }
+                }
+            }
+            
+            
+
+            var params = getQueryFromURL(location.href);
+            _pg.heading = 'heading' in params ? decodeURIComponent(params['heading']): 'PGSA Membership Card';
+            
+            document.querySelector('.mcard h2').innerHTML = _pg.heading;
+            let {surname, given_name, uno, since_year, style} = params;
+
+            
+            if(_pg.ready){
+                // do something
+                style && _pg.log('using style ', style, _pg.card_styles[style]);
+                _pg.log(`generating membership card for ${given_name} ${surname} of ID ${uno} since year ${since_year}`)
+            }
+            
+
+
+        </script>
+    </body>
+</html>

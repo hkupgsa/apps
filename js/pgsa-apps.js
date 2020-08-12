@@ -160,7 +160,7 @@ _pg.init = function(){
     return true;
 }
 
-_pg.allow_orders = [null, 'ascending', 'descending'];
+_pg.allow_orders = [null, 'ascending', 'descending', 'keep'];
 
 _pg.reorder = function(order, parent, sel, attr){
     // order in {null, latest, oldest}
@@ -178,13 +178,14 @@ _pg.reorder = function(order, parent, sel, attr){
         
     }else if(order == 'descending'){
         vals.sort((a,b)=>b[0]-a[0]);
-    }else{
+    }else{ // null, keep, ...
         return false;
     }
     _pg.log('sorted to ', vals);
     vals.forEach((e,i)=>{
         parent.append(eles[e[1]]);
     });
+    return true;
 
 
 
@@ -198,7 +199,7 @@ _pg.one_card = function(arr){
         return;//skip
     }
     let [fid, image_url, title, summary, extra] = arr;
-    console.log('loading ', fid);
+    _pg.log('loading ', fid);
     let link = "https://mp.weixin.qq.com/s/"+fid;
     let card = $(`<div data-link="${link}" data-t="${extra.publish_time}" class="panel article-card" id="s_${fid}"  >`);
     card.append(`<div class="panel-heading article-author">
@@ -304,12 +305,12 @@ _pg.retrieveArticle = async function (fid, ttl){
     // check localStorage
     let item = _pg.store(fid);
     if(item != null){
-        console.log('reuse local ', fid);
+        _pg.log('reuse local ', fid);
         return new Promise((resolve)=>resolve(item));
     }
 
     return $.ajax('/wx/'+fid).then(function(data){
-        console.log('retrieve article ', fid);
+        _pg.log('retrieve article ', fid);
         item = _pg.parseArticle(data);
         if(!!item){
             item.unshift(fid);

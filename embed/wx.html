@@ -33,16 +33,37 @@
 
             var params = getQueryFromURL(location.href);
             var _sep = 'sep' in params? params['sep']: ',';
+            var sheet_json = 'json' in params? params['json'].split(','): [];
             var articles = 'articles' in params ? params['articles'].split(_sep): [];
             _pg.heading = 'heading' in params ? decodeURIComponent(params['heading']): 'HKU-PGSA 港大研會';
             _pg.order = 'order' in params? params['order']: 'descending';
+            _pg.limit = 'limit' in params? params['limit']: 0;
             
             document.querySelector('.articles h2').innerHTML = _pg.heading;
 
             const li = $('div.articles');
             if(_pg.ready){
-                const info = articles.map((e)=>_pg.retrieveArticle(e));
-                _pg.load_articles(li, info);
+                let info;
+                if(sheet_json.length == 3){
+                    _pg.log('auto load from sheet ...');
+                    let [ss_id, s_num, cell] = sheet_json;
+                    $.ajax(`/feeds/cells/${ss_id}/${s_num}/public/basic/${cell}?alt=json`).then((data)=>{
+                        articles = data.entry.content.$t.split(',');
+                        articles = articles.filter((e,i,arr)=>arr.indexOf(e)==i);
+                        _pg.log('obtained unique ', articles);
+                        if(_pg.limit>0){
+                            articles = articles.slice(-_pg.limit);
+                        }
+                        info = articles.map((e)=>_pg.retrieveArticle(e));
+                        _pg.load_articles(li, info);
+                        
+
+                    }).catch((err)=>[]);
+                }else{
+                    info = articles.map((e)=>_pg.retrieveArticle(e));
+                    _pg.load_articles(li, info);
+                }
+                
             }
             
 
