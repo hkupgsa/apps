@@ -23,11 +23,7 @@ window.getQueryFromURL = function(url) {
 };
 
 window.getMeta = function(name, dom){
-   if(typeof $ == 'undefined'){
-       return null;
-   }
-
-   return $(`meta[property="${name}"]`, dom).attr('content');
+    return dom.querySelector(`meta[property="${name}"]`).getAttribute('content');
 }
 
 // from WeChat
@@ -54,6 +50,99 @@ window.setPublishTime = function(e,t,s,o){ // now:secs, publish:secs, date_str, 
     o.innerText=f;
     };
     },10));
+}
+
+String.prototype.html = function(encode) {
+    var replace =["&#39;", "'", "&quot;", '"', "&nbsp;", " ", "&gt;", ">", "&lt;", "<", "&yen;", "¥", "&amp;", "&"];
+    var replaceReverse = ["&", "&amp;", "¥", "&yen;", "<", "&lt;", ">", "&gt;", " ", "&nbsp;", '"', "&quot;", "'", "&#39;"];
+    var target;
+    if (encode) {
+        target = replaceReverse;
+    } else {
+        target = replace;
+    }
+    for (var i=0,str=this;i< target.length;i+= 2) {
+         str=str.replace(new RegExp(target[i],'g'),target[i+1]);
+    }
+    return str;
+};
+
+window.isInWeixinApp = function() {
+    return /MicroMessenger/.test(navigator.userAgent);
+};
+
+function ajax(url, method) {
+    method = method || 'GET';
+
+	// Create the XHR request
+	let request = new XMLHttpRequest();
+
+	// Return it as a Promise
+	return new Promise((resolve, reject) => {
+
+		// Setup our listener to process compeleted requests
+		request.onreadystatechange = () => {
+
+			// Only run if the request is complete
+            if (request.readyState !== 4) return;
+
+			// Process the response
+			if (request.status >= 200 && request.status < 300) {
+				// If successful
+				resolve(request.responseText);
+			} else {
+				// If failed
+				reject({
+					status: request.status,
+					statusText: request.statusText
+				});
+			}
+
+		};
+
+		// Setup our HTTP request
+		request.open(method, url, true);
+
+		// Send the request
+		request.send();
+
+	});
+};
+
+// TODO: proxify
+function ajaxPOST(obj){
+    let url   = obj.url;
+    let xhr   = new XMLHttpRequest();
+
+    let data = null;
+    if (typeof obj.data == "object"){
+        var d = obj.data;
+        data = [];
+        for(var k in d) {
+            if (d.hasOwnProperty(k)){
+                data.push(k + "=" + encodeURIComponent(d[k]));
+            }
+        }
+        data = data.join("&");
+    }else{
+        data = typeof obj.data  == 'string' ? obj.data : null;
+    }
+
+    xhr.open('POST', url, true);
+    xhr.onreadystatechange = function(){
+        if( xhr.readyState == 4 ){
+            if( xhr.status >= 200 && xhr.status < 400 ){
+                obj.success && obj.success(xhr.responseText);
+            } else {
+                obj.error && obj.error(xhr);
+            }
+            obj.complete && obj.complete();
+            obj.complete = null;
+        }
+    };
+    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+    xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+    xhr.send(data);
 }
 
 
@@ -161,18 +250,18 @@ _pg.init = function(){
 }
 
 _pg.allow_orders = [null, 'ascending', 'descending', 'keep'];
-
+// without jQuery
 _pg.reorder = function(order, parent, sel, attr){
     // order in {null, latest, oldest}
     if(_pg.allow_orders.indexOf(order)<0){
         _pg.log('unsupported order ', order);
         return false; // ignore unsupported order
     }
-    parent = $(parent);
-    let eles = parent.children(sel);
+    let eles = parent.querySelectorAll(sel);
     // TODO: deduplicate here? detect identical
-    let vals = eles.map(function(){return $(this).data(attr)}).get().map(
-           (e,i)=>[parseInt(e), i]);
+    let vals = Array.prototype.map.call(eles,
+        (ele, i)=>[parseInt(ele.getAttribute('data-'+attr)),i]
+    );
     _pg.log('before sorting: ',vals.slice());
     if(order == 'ascending'){
         vals.sort((a,b)=>a[0]-b[0]);
@@ -184,7 +273,7 @@ _pg.reorder = function(order, parent, sel, attr){
     }
     _pg.log('sorted to ', vals);
     vals.forEach((e,i)=>{
-        parent.append(eles[e[1]]);
+        parent.appendChild(eles[e[1]]);
     });
     return true;
 
@@ -192,7 +281,7 @@ _pg.reorder = function(order, parent, sel, attr){
 
 }
 
-
+// without jQuery
 _pg.one_card = function(arr){
     
     if(!arr || arr.length != 5){
@@ -202,45 +291,50 @@ _pg.one_card = function(arr){
     let [fid, image_url, title, summary, extra] = arr;
     _pg.log('loading ', fid);
     let link = "https://mp.weixin.qq.com/s/"+fid;
-    let card = $(`<div data-link="${link}" data-t="${extra.publish_time}" class="panel article-card" id="s_${fid}"  >`);
-    card.append(`<div class="panel-heading article-author">
+    let card = document.createElement('div');
+    card.classList.add('panel', 'article-card');
+    card.setAttribute('data-t', extra.publish_time);
+    card.setAttribute('data-link', link);
+    card.setAttribute('id', 's_' + fid);
+    card.innerHTML = `
+    <div class="panel-heading article-author">
         <table><tbody><tr>
         <td><img src="${extra.round_logo || ''}" style=""></td>
         <td><span>${extra.nickname || ''}</span></td>
         <td><span class="publish_time"></span></td>
         </tr></tbody></table>
-    </div>`);
-    card.append(`
-        <div class="panel-body">
-            <div class="article-image">
-            <img src="${image_url.replace('http://', '//')}">
-            </div>
-            <div class="article-summary">
-            <h3>${title}</h3>
-            <p>${summary}</p>
-            </div>
+    </div>
+    <div class="panel-body">
+        <div class="article-image">
+        <img src="${image_url.replace('http://', '//')}">
         </div>
-    `);
+        <div class="article-summary">
+        <h3>${title}</h3>
+        <p>${summary}</p>
+        </div>
+    </div>`;
     
 
-    $(card).find('.panel-body').click(function(){
+    card.querySelector('.panel-body').addEventListener('click', ()=>{
         _pg.log('clicked!');
         window.open(link, '_blank');
     });
-    let dom_ele = card[0].querySelector(`#s_${fid} .publish_time`);
+    let dom_ele = card.querySelector(`#s_${fid} .publish_time`);
     //_pg.log(dom_ele);
     setPublishTime(_pg.now, extra.publish_time, extra.publish_date, dom_ele);
     return card;
 
 }
 
+// without jQuery
 _pg.load_articles = async function (li, info, check_lock){
     // callback
     let t0 = opTime(1);
     // remove old articles if any
     if(!check_lock){ // not lazy loading
         _pg.lazy_lock = true; // lock unfinished lazy loading
-        li.children('.article-card').remove();
+        _pg.log('remove lazy added nodes');
+        li.querySelectorAll('.article-card').forEach(e=>e.parentNode.removeChild(e));
     }
     
     console.log('loading articles ...');
@@ -252,8 +346,7 @@ _pg.load_articles = async function (li, info, check_lock){
                     console.log('abort lazy loading');
                     return false; 
                 } // there may still be race condition here ...
-                li.append(card);
-                //li.append('<div><hr></div>');
+                li.appendChild(card);
             }
 
         }catch(e){
@@ -269,18 +362,27 @@ _pg.load_articles = async function (li, info, check_lock){
     return true;
 
 }
-
+// without jQuery
 _pg.parseArticle = function(data){
-    let html = $.parseHTML(data, null, true);// keepScripts=true
-        //https://stackoverflow.com/questions/15403600/jquery-not-finding-elements-in-jquery-parsehtml-result
-        let tmpDom = $('<output>').append(html);
+        let tmpDom = document.createElement('output');
+        tmpDom.innerHTML = data;
         let image_url = getMeta('twitter:image', tmpDom);
         let title = getMeta('twitter:title', tmpDom);
         let summary = getMeta('twitter:description', tmpDom);
         let extra = {};
 
-        let publish = $('script:contains("publish_time")', tmpDom).html();
-        let setting = $('script:contains(round_head_img)', tmpDom).html();
+        function contains(s, t){
+            return Array.prototype.filter.call(s, 
+                (e)=>(e.textContent || e.innerText).indexOf(t) > -1
+            );
+        }
+
+        let scripts = tmpDom.querySelectorAll('script');
+        let publish = contains(scripts, 'publish_time');
+        publish = publish.length? publish[0].innerHTML : '';
+
+        let setting = contains(scripts, 'round_head_img');
+        setting = setting.length? setting[0].innerHTML: '';
 
         var re_publish = /var\s+\w+\s*=\s*"(\d+)",\s*\w+\s*="(\d+)",\s*\w+\s*=\s*"([^"]+)"/g;
         var re_logo = /var\s+round_head_img\s*=\s*"([^"]+)"/g;
@@ -320,7 +422,7 @@ _pg.retrieveArticle = async function (fid, ttl){
         return new Promise((resolve)=>resolve(item));
     }
 
-    return $.ajax('/wx/'+fid).then(function(data){
+    return ajax('/wx/'+fid).then(function(data){
         _pg.log('retrieve article ', fid);
         item = _pg.parseArticle(data);
         if(!!item){

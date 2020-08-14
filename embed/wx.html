@@ -5,7 +5,6 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge">  
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>HKU-PGSA WeChat Articles</title>
-        <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
         <link type="text/css" rel="stylesheet" href="/css/wx-card.css">
 
     </head>
@@ -39,9 +38,10 @@
             _pg.order = 'order' in params? params['order']: 'descending';
             _pg.limit = 'limit' in params? params['limit']: 0;// limit to last a few articles
             
-            document.querySelector('.articles h2').innerHTML = _pg.heading;
+            const li = document.querySelector('div.articles');
+            const heading = document.querySelector('.articles h2');
+            heading.innerHTML = _pg.heading;
 
-            const li = $('div.articles');
             _pg.lazy_lock = false;
             if(_pg.ready){
                 let reused = null;
@@ -54,7 +54,8 @@
                     _pg.log('auto load from sheet ...');
                     let [ss_id, s_num, cell] = sheet_json;
                     // async update after lazy load
-                    $.ajax(`/feeds/cells/${ss_id}/${s_num}/public/basic/${cell}?alt=json`).then((data)=>{
+                    ajax(`/feeds/cells/${ss_id}/${s_num}/public/basic/${cell}?alt=json`).then((data)=>{
+                        data = JSON.parse(data);// without jQuery we need to parse manually
                         articles = data.entry.content.$t.split(',');
                         articles = articles.filter((e,i,arr)=>arr.indexOf(e)==i);
                         _pg.log('obtained unique ', articles);
@@ -70,6 +71,7 @@
                             _pg.log('sheet json without update');
                             _pg.store(sheet_json.join(','), reused, 86400*2);// refresh time, expire in 2 days
                         }
+                        return articles;
 
                     }).catch((err)=>[]);
 
