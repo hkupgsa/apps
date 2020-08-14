@@ -5,8 +5,9 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge">  
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>PGSA Membership Card</title>
-        <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
-        <link type="text/css" rel="stylesheet" href="/css/wx-card.css">
+        <link type="text/css" rel="stylesheet" href="/css/wx-card.css"> 
+        <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.2/dist/FileSaver.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
     </head>
     <body>
@@ -15,10 +16,13 @@
                 <h2>HKU-PGSA 港大研會</h2>
                 <div class="spinner"></div>
             </div>
-            <div class="mcard-body">
-                <div class="canvas-wrapper" id="mcard" style="background: white; width: 100%; max-width: 500px;">
-                    <canvas width="500"  height="350" style="width: 100%;"></canvas>
+            <div style="margin: auto; padding: 0;" class="mcard-body" >
+                <div class="canvas-wrapper">
+                    <canvas width="500"  height="350"></canvas>
                 </div>
+            </div>
+            <div class="mcard-foot">
+                <button class="btn" id="save-card">Save</button>
             </div>
             
 
@@ -41,24 +45,57 @@
 
                     },
                     font: {
+                        color: 'black',
+                        family: 'Halter',
                         path: '/css/card-HALTER.ttf'
+                    },
+                    badge: {
+
                     }
                 }
             }
             
             
 
-            var params = getQueryFromURL(location.href);
-            _pg.heading = 'heading' in params ? decodeURIComponent(params['heading']): 'PGSA Membership Card';
+            var params = getQueryFromURL(location.href, decodeURIComponent);
+            _pg.heading = 'heading' in params ? params['heading']: 'PGSA Membership Card';
             
-            document.querySelector('.mcard h2').innerHTML = _pg.heading;
-            let {surname, given_name, uno, since_year, style} = params;
+            const heading = document.querySelector('.mcard h2');
+            heading.innerHTML = _pg.heading;
+            let {surname, given_name, uno, since_year, style, qr} = params;
+            var canvas = document.querySelector('.mcard-body canvas');
 
             
-            if(_pg.ready){
-                // do something
-                style && _pg.log('using style ', style, _pg.card_styles[style]);
-                _pg.log(`generating membership card for ${given_name} ${surname} of ID ${uno} since year ${since_year}`)
+            if(_pg.ready && !!style){
+                let s = _pg.card_styles[style];
+                _pg.log('using style ', style, s);
+
+                if(!!qr){
+                    let qr_wrapper = document.createElement('div');
+                    _pg.qr_obj = new QRCode(qr_wrapper, qr);
+                    _pg.qr_canvas = qr_wrapper.querySelector('canvas');
+                }
+                
+                let css = document.createElement('style');
+                css.innerHTML = `
+                @font-face {
+                    font-family: '${s.font.family}';
+                    src: url('${s.font.path}');
+                    font-style: normal;
+                }`;
+                document.head.appendChild(css);
+                // make sure fonts are loaded
+                document.fonts.load('30pt '+s.font.family).then(
+                    ()=> _pg.drawMCard(canvas, s, {surname, given_name, uno, since_year}, _pg.qr_canvas)
+
+                );
+                document.getElementById('save-card').addEventListener('click', ()=>{
+                    _pg.saveCard(canvas);
+                });
+                
+                
+                
+                
             }
             
 

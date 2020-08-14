@@ -10,13 +10,13 @@ body::-webkit-scrollbar {
 }
 
 
-.container.articles{
+.container.articles,.container.mcard{
 
 width: 100%; 
 max-width: 600px;   
 margin: auto;
 }
-.container.articles h2{
+.container h2{
 text-align: center;
 color: #111111;
 }
@@ -111,4 +111,44 @@ margin-top: -2%;
 margin-left:3%; 
 margin-right:3%; 
 
+}
+
+.mcard-body .canvas-wrapper{
+    position: relative; 
+    overflow: hidden; 
+    border-radius: 1%; 
+    background: white; 
+    width: 100%;
+}
+
+.canvas-wrapper>canvas{
+    width: 100%; 
+    margin: auto; 
+    vertical-align: bottom; 
+    line-height: 1px;
+}
+
+.mcard-foot {
+    margin: 5px; 
+    text-align: center; 
+}
+
+.btn {
+    color: #fff;
+    background-color: #f0ad4e;
+    border-color: #eea236;
+    cursor: pointer;
+    user-select: none;
+    background-image: none;
+    border: 1px solid transparent;
+    padding: 10px 16px;
+    border-radius: 6px; 
+    font-size: medium; 
+
+}
+
+.btn:hover {
+    color: #fff;
+    background-color: #ec971f;
+    border-color: #d58512;
 }

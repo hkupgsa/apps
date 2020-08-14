@@ -9,14 +9,15 @@ window.encF = function(plain, key){ // assuming string input
     return plain; // TODO: AES CBC
 }
 
-window.getQueryFromURL = function(url) {
+window.getQueryFromURL = function(url, decode) {
+    decode = decode || ( (e)=>e );
     url = url || 'https://example.hku.hk/s?a=b#rd'; 
     let tmp = url.split('?'),
         query = (tmp[1] || "").split('#')[0].split('&'),
         params = {};
     for (let i=0; i<query.length; i++) {
         let arg = query[i].split('=');
-        params[arg[0]] = arg[1];
+        params[decode(arg[0])] = decode(arg[1]);
     }
    
     return params;
@@ -144,6 +145,31 @@ function ajaxPOST(obj){
     xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
     xhr.send(data);
 }
+
+
+function dataURItoBlob(dataURI) {
+    // doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
+    let byteString = atob(dataURI.split(',')[1]);
+
+    // separate out the mime component
+    let mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0]
+
+    // write the bytes of the string to an ArrayBuffer
+    let ab = new ArrayBuffer(byteString.length);
+
+    // create a view into the buffer
+    let ia = new Uint8Array(ab);
+
+    // set the bytes of the buffer to the correct values
+    for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+
+    // write the ArrayBuffer to a blob, and you're done
+    var blob = new Blob([ab], {type: mimeString});
+    return blob;
+
+  }
 
 
 // Namespace _pg
@@ -435,5 +461,66 @@ _pg.retrieveArticle = async function (fid, ttl){
     }).catch(function(err){
         console.log('fail to retrieve ', fid, err);
         return null;
-    });}
+    });
+}
+
+// canvas drawing
+
+_pg.drawMCard = function(canvas, style, obj, qr_canvas){
+    let {surname, given_name, uno, since_year} = obj;
+    _pg.log(`generating membership card for ${given_name} ${surname} of ID ${uno} since year ${since_year}`);
+    let bg = new Image();
+    bg.src = style.background.path;
+    let ctx = canvas.getContext('2d');
+
+    let disName = given_name + ' ' + surname;
+
+    let lenName = disName.length, sizeName;
+    // TODO: move to style
+    const posX1 = 770, posY1=916, posX2=415, posY2=900, posX3=1460, posY3=900;
+    if (lenName < 10){
+        sizeName = 45;
+    }else if(lenName < 15) {
+        sizeName = 40;
+        
+    }else if(lenName < 20){
+        sizeName = 35;
+    }else{
+        sizeName = 30;
+    }
+
+    
+    bg.onload = ()=>{
+        canvas.width=bg.width;
+        canvas.height=bg.height;
+        //_pg.log(bg.width, bg.height);
+        ctx.drawImage(bg, 0, 0);//
+
+        ctx.fillStyle=style.font.color;
+
+        ctx.font=sizeName+'pt '+style.font.family;
+        ctx.textAlign = 'center';
+        ctx.fillText(disName.toUpperCase(), posX1, posY1);
+
+        ctx.font='30pt '+style.font.family;
+        ctx.textAlign = 'right';
+        ctx.fillText(uno, posX2, posY2);
+        ctx.fillText(since_year, posX3, posY3);
+
+        if(!!qr_canvas){
+            ctx.drawImage(qr_canvas, posX3-256, posY3-500);
+            ctx.strokeStyle='white';
+            ctx.strokeRect(posX3-257, posY3-501, 258, 258);
+        }
+    }
+    return true;
+
+}
+
+_pg.saveCard = function(canvas){
+    return typeof saveAs == 'undefined'? null: saveAs(
+        dataURItoBlob(canvas.toDataURL("image/png")), 
+        "PGSA_Membership_Card.png"
+    );  
+}
 
