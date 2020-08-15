@@ -172,6 +172,18 @@ function dataURItoBlob(dataURI) {
   }
 
 
+function docReady(fn) {
+    // see if DOM is already available
+    if (document.readyState === "complete"
+        || document.readyState === "interactive") {
+        // call on next available tick
+        setTimeout(fn, 1);
+    } else {
+        document.addEventListener("DOMContentLoaded", fn);
+    }
+}
+
+
 // Namespace _pg
 
 var _pg = _pg || {}; // config object
@@ -262,7 +274,7 @@ _pg.purgeStore = function(_ver){
 
 _pg.init = function(){
     _pg.sec = _pg.sec || 'h'; // default section home;
-    _pg.ver = _pg.ver || 'v1.0'; // default version 1; 
+    _pg.ver = _pg.ver || 'v1.0.1'; // default version 1; 
     _pg.enc = _pg.enc || {}; // encryption keys;
     _pg.sep = ":"; _pg.ver_sep = ".";
     _pg.now = opTime();
@@ -470,7 +482,7 @@ _pg.drawMCard = function(canvas, style, obj, qr_canvas){
     let {surname, given_name, uno, since_year} = obj;
     _pg.log(`generating membership card for ${given_name} ${surname} of ID ${uno} since year ${since_year}`);
     let bg = new Image();
-    bg.src = style.background.path;
+    
     let ctx = canvas.getContext('2d');
 
     let disName = given_name + ' ' + surname;
@@ -513,14 +525,15 @@ _pg.drawMCard = function(canvas, style, obj, qr_canvas){
             ctx.strokeRect(posX3-257, posY3-501, 258, 258);
         }
     }
+    bg.src = style.background.path;
     return true;
 
 }
 
 _pg.saveCard = function(canvas){
     return typeof saveAs == 'undefined'? null: saveAs(
-        dataURItoBlob(canvas.toDataURL("image/png")), 
-        "PGSA_Membership_Card.png"
+        dataURItoBlob(canvas.toDataURL("image/jpeg")), 
+        "PGSA_Membership_Card.jpg"
     );  
 }
 

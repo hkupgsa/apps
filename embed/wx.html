@@ -62,7 +62,7 @@
                         if(reused != articles.join(',')){
                             reused = articles.join(',');
                             _pg.log('sheet json with update');
-                            _pg.store(sheet_json.join(','), reused, 86400*2);// update value, expire in 2 days
+                            _pg.store(sheet_json.join(','), reused, 86400*3);// update value, expire in 3 days
                             _pg.load_articles(
                                 li, 
                                 (_pg.limit>0? articles.slice(-_pg.limit): articles).map((e)=>_pg.retrieveArticle(e))

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">  
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>QR Code Scan Demo</title>
+        <link type="text/css" rel="stylesheet" href="/css/wx-card.css"> 
+        <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@1.1.7/minified/html5-qrcode.min.js"></script>
+    </head>
+
+    <body>
+        <div class="container scan">
+            <div class="scan-heading">
+                <h2></h2>
+            </div>
+            <div style="width: 100%; max-width: 600px; min-height: 400px; margin: auto; " class="scan-body" id="reader">
+
+            </div>
+            <div style="width: 95%; margin: auto;" class="scan-foot">
+                <button class="btn" id="request-cam">Request Cam</button>
+                <select id="cameras">
+                    <option value="">Select a Camera</option>
+                </select>
+                
+                <button class='btn' id="toggle-scan"> Scan </button>
+                <div id="scan-result"></div>
+            </div>
+
+        </div>
+        <script src="/js/pgsa-apps.js"></script>
+        <script>
+            var _pg = _pg || {};
+            _pg.sec = 'c'; _pg.ver = 'v1.0.1';
+            _pg.refresh = false; // true; //
+            _pg.purge = true;
+            _pg.init &&  (_pg.ready = _pg.init()) &&  (_pg.enc['dummy'] = 'secret');
+
+            var params = getQueryFromURL(location.href, decodeURIComponent);
+            _pg.heading = 'heading' in params ? params['heading']: 'QR Code Scan';
+            
+            _pg.cameras = [];
+            _pg.res = [];// confirm if >=2 consistent scanned results
+
+
+            const cam = document.getElementById('cameras');
+            const btn = document.getElementById('toggle-scan');
+            const res = document.getElementById('scan-result');
+            const html5QrCode = new Html5Qrcode("reader");
+
+
+            var lastResult="", countResults = 0;
+            function getCam(){
+                Html5Qrcode.getCameras().then(devices => {
+                    return _pg.cameras = devices.map(e=>{
+                        let op = document.createElement('option');
+                        op.value = e.id;
+                        op.innerHTML = e.label;
+                        cam.appendChild(op);
+                        return e.id;
+                    });
+                }).catch(err=>_pg.cameras=[]);
+            }
+            function onScanSuccess(msg) {
+                _pg.log('QR Code detected: ', msg);
+                if (msg !== lastResult) {
+                    ++countResults;
+                    lastResult = msg;
+                    res.innerHTML
+                        += `<div><a href="${msg}" target="_top">[${countResults}] - ${msg}</a></div>`;
+                }
+                return msg;
+            }
+
+            if(_pg.ready){
+                
+                // do something
+                
+                
+                
+                _pg.scanning = false;
+
+                document.getElementById('request-cam').addEventListener('click', getCam);
+
+                btn.addEventListener('click',()=>{
+                    if(_pg.cameras.length==0 || cam.value.length==0){
+                        _pg.log('no cameras detected or allowed!');
+                        res.innerHTML = "Please select the camera first!";
+                        return _pg.scanning = false;
+                    }
+                    if(_pg.scanning){
+                        btn.innerHTML = "Scan";
+                        html5QrCode.stop().then(
+                            _=>{_pg.log('scanning stopped!'); }
+                        ).catch(
+                            err=>{_pg.log('unable to stop: ', err); res.innerHTML=err;}
+                        );
+                        return _pg.scanning = false;
+                    }
+                    btn.innerHTML = "Stop";
+                    _pg.log('using cameras: ', cam.value);
+                    res.innerHTML = "";
+                    html5QrCode.start(cam.value,{
+                        fps: 6,
+                        qrbox: 300,
+                    }, 
+                    onScanSuccess,
+                    err=>{
+                        _pg.log('QR Code no longer in front of camera');
+                        //return res.innerHTML = '';
+                    }).catch(err=>{
+                        _pg.log('unable to start scan: ', err);
+                        res.innerHTML=err;
+                    });
+                    return _pg.scanning = true;
+
+                    
+                });
+
+
+
+
+
+            }
+            
+
+    // docReady(() => {
+    //     let html5QrcodeScanner = new Html5QrcodeScanner(
+    //         "reader", { fps:4, qrbox: 300 });
+    //     html5QrcodeScanner.render(onScanSuccess);
+    // });
+        </script>
+
+    </body>
+</html>
