@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">  
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Demo Template</title>
+        <link type="text/css" rel="stylesheet" href="/css/wx-card.css"> 
+    </head>
+
+    <body>
+        <div class="container example">
+            <div class="example-heading">
+                <h2></h2>
+            </div>
+
+
+        </div>
+        <script src="/js/pgsa-apps.js"></script>
+        <script>
+            var _pg = _pg || {};
+            _pg.sec = 'c'; _pg.ver = 'v1.0.1';
+            _pg.refresh = false; // true; //
+            _pg.purge = true;
+            _pg.init &&  (_pg.ready = _pg.init()) &&  (_pg.enc['dummy'] = 'secret');
+
+            var params = getQueryFromURL(location.href, decodeURIComponent);
+            _pg.heading = 'heading' in params ? params['heading']: 'QR Code Scan';
+
+            if(_pg.ready){
+                
+                // do something
+                _pg.ready = function(){
+                    _pg.log('ready to do something');
+
+
+                }
+                
+
+            }
+            
+
+            docReady(() => {
+                typeof _pg.ready == 'function' && _pg.ready();
+            });
+        </script>
+
+    </body>
+</html>
