@@ -10,6 +10,7 @@
 /tw https://twitter.com/hkupgsa
 /yt https://www.youtube.com/channel/UCHQ34dXVGWUX1FRvnIBB4pg 302
 /mp https://weixin.sogou.com/weixin?query=hkupgsa 302
+/bb https://space.bilibili.com/676038966 302
 
 
 # proxy
@@ -21,10 +22,15 @@
 /sheet	id=:id num=:num cell=:cell	https://spreadsheets.google.com/feeds/cells/:id/:num/public/basic/:cell	200
 /_/freebird/*	https://www.gstatic.com/_/freebird/:splat	200
 
+/js/pgsa-config.js /js/pgsa-config-cn.js 200 Country=cn
+/js/pgsa-config.js /js/pgsa-config-en.js 200
+
 
 /wx/* https://mp.weixin.qq.com/s/:splat 200
 /sou type=:t query=:q https://weixin.sogou.com/weixin?type=:t&query=:q 200
 
 /embed/wx_latest /embed/wx?limit=15&json=1P0GRW6d2feNSB-ouWQ4U3J3vdcmP4pDat_XjqhlRnHE,1,R1C4 302
 /embed/wx_submit https://docs.google.com/forms/d/e/1FAIpQLScpTBBExgjyw-4-fr8-6DUWNJi_ABtS1H9Btyosk2GB-YAVog/viewform 302
+
+/recruit20 https://hku.au1.qualtrics.com/jfe/form/SV_eJpwypZHdHxGRNz 302
 
