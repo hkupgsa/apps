@@ -25,7 +25,7 @@
             _pg.init &&  (_pg.ready = _pg.init()) &&  (_pg.enc['dummy'] = 'secret');
 
             var params = getQueryFromURL(location.href, decodeURIComponent);
-            _pg.heading = 'heading' in params ? params['heading']: 'QR Code Scan';
+            _pg.heading = 'heading' in params ? params['heading']: 'Demo Template';
 
             if(_pg.ready){
                 

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">  
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>QR Code Countdown Demo</title>
+        <link type="text/css" rel="stylesheet" href="/css/wx-card.css"> 
+    </head>
+
+    <body>
+        <div class="container countdown">
+            <div class="countdown-heading">
+                <h2></h2>
+            </div>
+            <div class="countdown-body" style="max-width: 300px; padding: 0; margin: auto;">
+                <iframe width="300" height="400" style="border: 0;" frameborder="0" src="/embed/qrcode.html?autoRefresh=1&btnRefresh=1&countdown=10&qr=https://www.pgsa.hku.hk&colorDark=%2360BE00">QR Code</iframe>
+            </div>
+
+
+        </div>
+        <script src="/js/pgsa-apps.js"></script>
+        <script>
+            var _pg = _pg || {};
+            _pg.sec = 'c'; _pg.ver = 'v1.0.1';
+            _pg.refresh = false; // true; //
+            _pg.purge = true;
+            _pg.init &&  (_pg.ready = _pg.init()) &&  (_pg.enc['dummy'] = 'secret');
+
+            var params = getQueryFromURL(location.href, decodeURIComponent);
+            _pg.heading = 'heading' in params ? params['heading']: 'QR Code Count Down';
+
+            if(_pg.ready){
+                
+                // do something
+                _pg.ready = function(){
+                    _pg.log('ready to do something');
+                    // handle window message
+                    let examples = ['https://www.pgsa.hku.hk/societies', 'https://www.pgsa.hku.hk/welcome'];
+                    window.addEventListener('message', (e)=>{
+                        let src = e.source;
+                        let data = e.data;
+                        console.log('receive msg from origin ', e.origin);
+                        if(data.app == 'qr-countdown'){
+                            switch(data.op){
+                                case 'init':
+                                    
+                                break;
+                                case 'refresh':
+                                   console.log('refresh');
+                                   src.postMessage({
+                                       app: 'parent-countdown',
+                                       op: 'refresh',
+                                       params: {
+                                           qr: examples[0] == data.params.qr? examples[1]: examples[0],
+                                           countdown: data.params.countdown,
+                                           autoRefresh: 1,
+    
+                                       }
+                                   }, '*');
+                                break;
+                                case 'finish':
+                                break;
+                                default:
+                            
+                            }
+
+                        }
+
+
+                    }, false);
+                    setTimeout(()=>{
+                        window.frames[0].postMessage({
+                            app:'parent-countdown', 
+                            op:'finish'}, 
+                        '*');  // auto terminated
+                    }, 35*1000)
+
+
+                }
+                
+
+            }
+            
+
+            docReady(() => {
+                typeof _pg.ready == 'function' && _pg.ready();
+            });
+        </script>
+
+    </body>
+</html>

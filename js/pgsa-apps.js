@@ -479,7 +479,8 @@ _pg.retrieveArticle = async function (fid, ttl){
 // canvas drawing
 
 _pg.drawMCard = function(canvas, style, obj, qr_canvas){
-    let {surname, given_name, uno, since_year} = obj;
+    let {surname, given_name, uno, since_year, unverified} = obj;
+    
     _pg.log(`generating membership card for ${given_name} ${surname} of ID ${uno} since year ${since_year}`);
     let bg = new Image();
     
@@ -523,6 +524,18 @@ _pg.drawMCard = function(canvas, style, obj, qr_canvas){
             ctx.drawImage(qr_canvas, posX3-256, posY3-500);
             ctx.strokeStyle='white';
             ctx.strokeRect(posX3-257, posY3-501, 258, 258);
+        }
+        if(!!unverified){
+            // Red Not Verified
+            ctx.save();
+            ctx.translate(bg.width/2, bg.height/2);
+            ctx.rotate(-Math.PI/4);
+            ctx.textAlign = "center";
+            ctx.font="90pt "+style.font.family;
+            ctx.fillStyle='rgba(255,0,0,0.75)';
+            ctx.fillText(unverified || "Not Verified", -200, -100);
+            ctx.fillText(unverified || "Not Verified", 200, 300);
+            ctx.restore();
         }
     }
     bg.src = style.background.path;

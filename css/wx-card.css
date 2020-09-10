@@ -152,3 +152,29 @@ margin-right:3%;
     background-color: #ec971f;
     border-color: #d58512;
 }
+
+.qrcode-body #qrcode {
+    position: relative;
+    width: 100%;
+    max-width: 260px;
+    max-height: 260px;
+    margin: auto;
+    
+    padding: 2px;
+    background: white;
+}
+#qrcode img{
+    position: relative;
+    margin: auto;
+
+}
+.qrcode-body {
+    width: 100%;
+    margin: 0;
+    
+}
+
+.qrcode-footer{
+    text-align: center;
+    margin: auto;
+}

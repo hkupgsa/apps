@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">  
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>QR Code</title>
+        <link type="text/css" rel="stylesheet" href="/css/wx-card.css"> 
+        <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    </head>
+
+    <body>
+        <div class="container qrcode">
+            <div class="qrcode-body">
+                <div id="qrcode"></div>
+
+            </div>
+            <div class="qrcode-footer">
+                <p>Expired in <span style="color: red;" id="countdown"></span> seconds</p>
+                <button id="refresh" class="btn">Refresh</button>
+            </div>
+
+
+        </div>
+        <script src="/js/pgsa-apps.js"></script>
+        <script>
+            var _pg = _pg || {};
+            _pg.sec = 'c'; _pg.ver = 'v1.0.1';
+            _pg.refresh = false; // true; //
+            _pg.purge = true;
+            _pg.init &&  (_pg.ready = _pg.init()) &&  (_pg.enc['dummy'] = 'secret');
+
+            var params = getQueryFromURL(location.href, decodeURIComponent);
+            //_pg.heading = 'heading' in params ? params['heading']: 'QR Code Count Down';
+            
+
+            if(_pg.ready){
+                
+                // do something
+                _pg.ready = function(){
+                    _pg.log('ready to do something');
+                    
+                    let {btnRefresh, qr, countdown, autoRefresh, colorDark, colorLight} = params;
+                    let tgt = window.top;
+                    if(!!qr){
+                        let qr_wrapper = document.getElementById('qrcode');
+                        _pg.qr_obj = new QRCode(qr_wrapper, {
+                            text: qr, 
+                            colorDark: colorDark || '#000000', 
+                            colorLight: colorLight || '#fff'
+                        });
+                    }else{
+                        tgt.postMessage({app:'qr-countdown', op:'init'}, '*');
+                    }
+                    let remaining;
+                    let countdown_wrapper = document.getElementById('countdown');
+                    function start_countdown(countdown){
+                        remaining = parseInt(countdown);
+                        countdown_wrapper.innerHTML = remaining;
+
+                        let timer = setInterval(()=>{
+                            if(remaining>0){
+                                remaining -= 1;
+                                countdown_wrapper.innerHTML = remaining;
+                            }
+
+                            if(remaining == 0 && !!autoRefresh){
+                                refresh_qr();
+                                autoRefresh -= 1;
+                            }
+
+                            //if(remaining==0){}
+                            
+                            if(remaining<0){
+                                clearInterval(timer);
+                                console.log('timer finished');
+                            }
+
+
+                        }, 1000);
+
+                    }
+                    if(!!countdown){
+                        start_countdown(countdown);
+                        
+                    }
+                    function refresh_qr(){
+                        if(tgt == window){
+                                return false;
+                        }
+                        
+                        
+                        _pg.log('post window message');
+                        tgt.postMessage({
+                            app: 'qr-countdown',
+                            op: 'refresh',
+                            params:{
+                                countdown: countdown || -1,
+                                qr: qr || '',
+                                btnRefresh: btnRefresh
+                            }
+
+                        }, '*');
+                        return true;
+
+                    }
+                    let btn;
+                    
+                    
+                    if(!!btnRefresh){
+                        btn = document.querySelector('button#refresh');
+                        
+                        btn.addEventListener('click', refresh_qr);
+                    }
+                    window.addEventListener('message', (e)=>{
+                        let src = e.source, data = e.data;
+                        _pg.log('receive msg for op ', data.op);
+                        if(data.app != 'parent-countdown'){
+                            return '';
+                        }
+                        if(data.op=='init'){
+                            let qr_wrapper = document.getElementById('qrcode');
+                            qr = data.params.qr;
+                            _pg.qr_obj = new QRCode(qr_wrapper, qr);
+                            start_countdown(data.params.countdown);
+                            return qr;
+                        }
+                        if(data.op=='finish'){
+                            remaining = -1;// auto clear timer
+                            countdown_wrapper.parentNode.innerHTML="QR Code Scanned!";
+                            btn && btn.removeEventListener('click', refresh_qr);
+                            return qr = '';
+                        }
+                        // refresh
+                        if(!_pg.qr_obj){
+                            let qr_wrapper = document.getElementById('qrcode');
+                            _pg.qr_obj = new QRCode(qr_wrapper, qr = data.params.qr);
+                            start_countdown(data.params.countdown);
+                        }else{
+                            _pg.qr_obj.clear();
+                            _pg.qr_obj.makeCode(qr = data.params.qr);
+                            remaining = data.params.countdown || 30;
+                            if(!! data.params.autoRefresh){
+                                autoRefresh = data.params.autoRefresh;
+                            }
+                        }
+                        
+
+                        
+                        return qr;
+                        
+                    }, false);
+
+
+                }
+                
+
+            }
+            
+
+            docReady(() => {
+                typeof _pg.ready == 'function' && _pg.ready();
+            });
+        </script>
+
+    </body>
+</html>

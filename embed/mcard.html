@@ -62,7 +62,7 @@
             
             const heading = document.querySelector('.mcard h2');
             heading.innerHTML = _pg.heading;
-            let {surname, given_name, uno, since_year, style, qr} = params;
+            let {surname, given_name, uno, since_year, style, qr, unverified, colorDark} = params;
             var canvas = document.querySelector('.mcard-body canvas');
 
             
@@ -72,7 +72,7 @@
 
                 if(!!qr){
                     let qr_wrapper = document.createElement('div');
-                    _pg.qr_obj = new QRCode(qr_wrapper, qr);
+                    _pg.qr_obj = new QRCode(qr_wrapper, {text: qr, colorDark: colorDark || '#000000'});
                     _pg.qr_canvas = qr_wrapper.querySelector('canvas');
                 }
                 
@@ -86,7 +86,7 @@
                 document.head.appendChild(css);
                 // make sure fonts are loaded
                 document.fonts.load('30pt '+s.font.family).then(
-                    ()=> _pg.drawMCard(canvas, s, {surname, given_name, uno, since_year}, _pg.qr_canvas)
+                    ()=> _pg.drawMCard(canvas, s, {surname, given_name, uno, since_year, unverified}, _pg.qr_canvas)
 
                 );
                 document.getElementById('save-card').addEventListener('click', ()=>{
