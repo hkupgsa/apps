@@ -431,7 +431,7 @@ _pg.parseArticle = function(data){
             _pg.log(html);
             return null;
         }
-        image_url = image_url.  replace('http://', '//');
+        image_url = image_url.replace('http://', '//');
         // get publish time and round logo
         let publish_res = re_publish.exec(publish);
         let logo_res = re_logo.exec(setting);
@@ -478,8 +478,9 @@ _pg.retrieveArticle = async function (fid, ttl){
 
 // canvas drawing
 
-_pg.drawMCard = function(canvas, style, obj, qr_canvas){
-    let {surname, given_name, uno, since_year, unverified} = obj;
+_pg.drawMCard = function(canvas, style, obj, canvases){
+    let {surname, given_name, uno, since_year, unverified} = obj || {};
+    let {qr, avatar} = canvases || {};
     
     _pg.log(`generating membership card for ${given_name} ${surname} of ID ${uno} since year ${since_year}`);
     let bg = new Image();
@@ -489,8 +490,6 @@ _pg.drawMCard = function(canvas, style, obj, qr_canvas){
     let disName = given_name + ' ' + surname;
 
     let lenName = disName.length, sizeName;
-    // TODO: move to style
-    const posX1 = 770, posY1=916, posX2=415, posY2=900, posX3=1460, posY3=900;
     if (lenName < 10){
         sizeName = 45;
     }else if(lenName < 15) {
@@ -512,18 +511,34 @@ _pg.drawMCard = function(canvas, style, obj, qr_canvas){
         ctx.fillStyle=style.font.color;
 
         ctx.font=sizeName+'pt '+style.font.family;
-        ctx.textAlign = 'center';
-        ctx.fillText(disName.toUpperCase(), posX1, posY1);
+        ctx.textAlign = style.pos.name.align; // 'center',
+        ctx.fillText(disName.toUpperCase(), style.pos.name.x, style.pos.name.y);
 
         ctx.font='30pt '+style.font.family;
-        ctx.textAlign = 'right';
-        ctx.fillText(uno, posX2, posY2);
-        ctx.fillText(since_year, posX3, posY3);
+        ctx.textAlign = style.pos.uno.align; //'right';
+        ctx.fillText(uno, style.pos.uno.x, style.pos.uno.y);
+        ctx.textAlign = style.pos.since_year.align; // 'right';
+        ctx.fillText(since_year, style.pos.since_year.x, style.pos.since_year.y);
 
-        if(!!qr_canvas){
-            ctx.drawImage(qr_canvas, posX3-256, posY3-500);
-            ctx.strokeStyle='white';
-            ctx.strokeRect(posX3-257, posY3-501, 258, 258);
+        if(!!qr){
+            const qr_size = 256;
+            ctx.drawImage(qr, style.pos.qr.x, style.pos.qr.y);
+            if(!!style.pos.qr.border){
+                // white border
+                ctx.strokeStyle='white';
+                ctx.strokeRect(style.pos.qr.x-1, style.pos.qr.y-1, qr_size+2, qr_size+2);
+            }
+            
+        }
+        if(!!avatar){
+            const avatar_size = 256;
+            ctx.drawImage(avatar, style.pos.avatar.x, style.pos.avatar.y);
+            if(!!style.pos.avatar.border){
+                ctx.strokeStyle='white';
+                ctx.strokeRect(style.pos.avatar.x-1, style.pos.avatar.y-1, 
+                    avatar_size+2, avatar_size+2);
+                }
+
         }
         if(!!unverified){
             // Red Not Verified
@@ -546,7 +561,7 @@ _pg.drawMCard = function(canvas, style, obj, qr_canvas){
 _pg.saveCard = function(canvas){
     return typeof saveAs == 'undefined'? null: saveAs(
         dataURItoBlob(canvas.toDataURL("image/jpeg")), 
-        "PGSA_Membership_Card.jpg"
+        "PGSA_Membership_Card_"+uno+".jpg"
     );  
 }
 

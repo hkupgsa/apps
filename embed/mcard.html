@@ -8,6 +8,8 @@
         <link type="text/css" rel="stylesheet" href="/css/wx-card.css"> 
         <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.2/dist/FileSaver.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/jdenticon@3.1.0/dist/jdenticon.min.js">
+</script>
 
     </head>
     <body>
@@ -44,6 +46,29 @@
                         // other dimensions
 
                     },
+                    pos: {
+                        name: {
+                            align: 'center',
+                            x: 770, y: 916
+                        },
+                        uno: {
+                            align: 'right',
+                            x: 415, y: 900
+                        },
+                        since_year: {
+                            align: 'right',
+                            x: 1460, y: 900
+                        },
+                        qr: {
+                            x: 1460-256, y: 400,
+                            border: 'white'
+                        },
+                        avatar: {
+                            x: 60, y: 520,
+                            border: null
+                        }
+
+                    },
                     font: {
                         color: 'black',
                         family: 'Halter',
@@ -62,7 +87,7 @@
             
             const heading = document.querySelector('.mcard h2');
             heading.innerHTML = _pg.heading;
-            let {surname, given_name, uno, since_year, style, qr, unverified, colorDark} = params;
+            let {surname, given_name, uno, since_year, style, qr, unverified, colorDark, avatar} = params;
             var canvas = document.querySelector('.mcard-body canvas');
 
             
@@ -73,7 +98,16 @@
                 if(!!qr){
                     let qr_wrapper = document.createElement('div');
                     _pg.qr_obj = new QRCode(qr_wrapper, {text: qr, colorDark: colorDark || '#000000'});
-                    _pg.qr_canvas = qr_wrapper.querySelector('canvas');
+                    _pg.qr = qr_wrapper.querySelector('canvas');
+                    // QR code image data on qr_canvas
+                }
+                if(!!avatar &&  !!jdenticon){
+                    // check if image url
+                    const avatar_size = 256;
+                    let avatar_canvas = _pg.avatar = document.createElement('canvas');
+                    avatar_canvas.width = avatar_canvas.height = avatar_size;
+                    let ctx = avatar_canvas.getContext("2d");
+                    jdenticon.drawIcon(ctx, avatar, avatar_size);
                 }
                 
                 let css = document.createElement('style');
@@ -86,7 +120,7 @@
                 document.head.appendChild(css);
                 // make sure fonts are loaded
                 document.fonts.load('30pt '+s.font.family).then(
-                    ()=> _pg.drawMCard(canvas, s, {surname, given_name, uno, since_year, unverified}, _pg.qr_canvas)
+                    ()=> _pg.drawMCard(canvas, s, {surname, given_name, uno, since_year, unverified}, {qr:_pg.qr, avatar: _pg.avatar})
 
                 );
                 document.getElementById('save-card').addEventListener('click', ()=>{
