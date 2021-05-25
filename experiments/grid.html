@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">  
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Grid Demo</title>
+        <link type="text/css" rel="stylesheet" href="/css/wx-card.css"> 
+        <style>
+
+        
+            .imagepost.grid {
+                position: relative;
+                background-color: white;
+                border-radius: min(3%,10px);
+                width: 100%;
+                margin-left: auto; margin-right: auto;  
+                --avatar-width: max(calc(var(--container-width)/8), 70px);
+                --right-padding: max(calc(var(--container-width)/16), 30px);
+                --base-width: calc((var(--container-width) - var(--avatar-width) - var(--right-padding))/3);   
+                --grid-gap: calc(min(var(--base-width)/40, 6px)); 
+                     
+            }
+            
+            
+            .imagepost.grid .single-row {
+                position: relative;
+                box-sizing: border-box;
+                /*background-color: hotpink;*/
+                max-width: calc(var(--base-width)*2);
+                max-height: calc(var(--base-width)*2);
+                padding-bottom: var(--grid-gap);
+                padding-right: var(--grid-gap);
+            }
+            .single-row .single-img {
+                position: relative;
+                box-sizing: border-box;
+                max-width: inherit; max-height: inherit;
+                padding: 0;
+            }
+            .single-img > .center-cropped{
+                object-fit: contain; /* scale and show full */
+                object-position: left top;
+                margin: 0;
+                padding: 0;
+            }
+            .fullview > .center-cropped{
+                object-fit: contain; /* scale and show full */
+                object-position: center;
+                padding: 0;
+            }
+            .imagepost.grid .grid-row  {
+                position: relative;
+                display: grid;/*flex;*/
+                /*background-color: hotpink;*/
+                box-sizing: border-box;
+                /*overflow: hidden;*/
+                
+                /*height: var(--base-width);*/
+                width: calc(var(--base-width) * 3);
+                grid-gap: var(--grid-gap);
+                padding-bottom: var(--grid-gap);
+                padding-right: var(--grid-gap);
+                margin: 0;
+                grid-template-columns: 1fr 1fr 1fr;
+                grid-auto-rows: calc(var(--base-width) - var(--grid-gap));
+                grid-auto-flow: row dense;
+                
+            }
+            .grid-row .grid-img {
+                display: block;
+                position: relative;
+                max-height: calc(var(--base-width) - var(--grid-gap));
+                margin: 0; padding: 0;
+                
+            }
+            .grid-img .fullbox .center-cropped, .grid-img>.center-cropped {
+                object-fit: cover; /* scale and crop */
+                max-height: inherit;
+            }
+
+            .grid-heading h2{
+                padding-top: 2%;
+                font-size: large;
+            }
+
+            .grid-caption p{
+                padding-left: 9%;
+                font-size: medium;
+
+            }
+
+            .grid-body  {
+                position: relative;
+                margin-top: 4px;
+                margin-bottom: 4px;
+                padding-left: var(--avatar-width);
+                padding-right: var(--right-padding);
+                box-sizing: border-box;
+                width: 100%;
+            }
+            
+            .imagepost .previewbox {
+                display: block;
+                visibility: hidden;
+                
+            }
+
+            @keyframes cimg {
+                from { transform: scale(0.0)}
+                to { transform: scale(1)}
+            }
+            .imagepost .previewbox:target {
+                visibility: visible;
+                
+                z-index: 10; /* preview large image */
+                transition: transform var(--zoom-time);
+                animation: cimg var(--zoom-time) 1;
+                
+                
+            }
+
+            .modal-img {
+                display: none;
+            }
+           
+
+            .previewbox:target ~ .modal-img {
+                display: block;
+            
+                opacity: 0;
+                z-index: 12; /* on top, click to dismiss */
+
+            }
+            
+            .imagepost .grid-pre  { /* do not define z-index */
+                display: block;
+            }
+            .grid-pre.a, .grid-pre a{
+                display: block;
+            }
+       
+       
+            
+            .imagepost .grid-pre:target ~ .previewbox {
+                
+                visibility: visible;
+                transform: scale(0.0);
+                z-index: 9;
+                transition: transform var(--fade-time);
+                
+                animation: cimg var(--zoom-time) reverse 1;
+
+            }
+
+            .imagepost .blackout { /* fixed full viewport */
+                
+                display: block;
+                pointer-events: none;
+                z-index: 8;
+                background-color: black;
+
+                visibility: hidden;
+                opacity: 0;
+                transition: opacity var(--fade-time);
+            }
+
+            .grid-pre:target ~ .blackout { /* dismiss */
+                visibility: visible;
+                opacity: 0;
+            }
+
+            .previewbox:target ~.blackout { /* preview */
+                visibility: visible;
+                opacity: 0.8;
+            }
+           
+        </style>
+    </head>
+
+    <body>
+        <div>
+           
+        </div>
+
+        <div class="container grid">
+            <div class="imagepost grid">
+            <div class="grid-heading">
+                <h2>Gallery</h2>
+                
+            </div>
+            <div class="grid-caption">
+                <p> Images Examples.</p>
+            </div>
+            <div class="grid-body" id="gb1">
+                
+                <!-- Ex1: 3 images in a row -->
+                <div class="grid-row">
+                    
+                    <div class="grid-img" data-src="/img/Zhizhi.jpg" data-id="img1" data-ratio="square">
+                        <img class="center-cropped" src="/img/Zhizhi.jpg" >
+                        <a class="grid-pre fullbox" href="#cimg1" id="pimg1" >
+                            
+                        </a>
+                        
+                        <div class="previewbox fullview" id="cimg1" >
+                            <img class="center-cropped" src="/img/Zhizhi.jpg" >
+                        </div>
+                        <a class="modal-img fullview" href="#pimg1"></a>
+                        <div class="blackout fullview"></div>
+                        
+                    </div>
+                    
+                    
+                    <div class="grid-img" data-src="/img/reading.jpg">
+                        <img class="center-cropped" src="/img/reading.jpg" >
+                        <a class="grid-pre fullbox" href="#cimg2" id="pimg2"></a>
+                        
+                        
+                        <div class="previewbox fullview" id="cimg2">
+                            <img class="center-cropped" src="/img/reading.jpg" ></div>
+                        <a class="modal-img fullview" href="#pimg2"></a>
+                        <div class="blackout fullview"></div>
+                    </div>
+                    <div class="grid-img">
+                        <img class="center-cropped" src="/img/Tshirt.jpg" >
+                        <a class="grid-pre fullbox" href="#cimg3" id="pimg3">
+                            
+                        </a>
+                        
+                        <div class="previewbox fullview" id="cimg3">
+                            <img class="center-cropped" src="/img/Tshirt.jpg" ></div>
+                        <a class="modal-img fullview" href="#pimg3"></a>
+                        <div class="blackout fullview"></div>
+
+                    
+                    </div>
+                    
+                </div>
+
+                <!-- Ex4: 2 images in a row -->
+                <div class="grid-row">
+                    <div class="grid-img">
+                        <img class="center-cropped" src="/img/Tshirt.jpg" >
+                        <div class="grid-pre fullbox">
+                        </div>
+                        <a class="modal-img fullview"></a>
+                        <a class="blackout fullview"></a>
+
+                    </div>
+                    <div class="grid-img">
+                        <img class="center-cropped" src="/img/Zhizhi.jpg" >
+                        <a class="grid-pre fullbox"></a>
+                        <div class="previewbox fullview">
+
+                        </div>
+                        <a class="modal-img fullview"></a>
+                        <a class="blackout fullview"></a>
+
+                    </div>
+                    <div class="grid-img">
+                        <!--<img class="center-cropped" src="/img/reading.jpg" > -->
+
+                    </div>  
+                    
+                </div>
+
+            </div>  <!-- grid-body  -->
+            <hr>
+            <div class="grid-body" id="gb2">
+                
+                <!-- Ex2: 1 image full height -->
+                <div class="single-row">
+                <div class="single-img" data-src="/img/chords.png" data-id="img4" data-ratio="keep">
+                    
+                    <img class="center-cropped" src="/img/chords.png">
+                    <a class="grid-pre fullbox" id="pimg4" href="#cimg4"></a>
+                    <div class="previewbox fullview" id="cimg4">
+                        <img class="center-cropped" src="/img/chords.png">
+                    </div>
+                    <a class="modal-img fullview" href="#pimg4"></a>
+                    <a class="blackout fullview"></a>
+                </div>
+            </div>
+            </div><!-- grid-body  -->
+            <hr>
+            <div class="grid-body" id="gb3">
+                <!-- Ex3: 1 image full width -->
+                <div class="single-row">
+                <div class="single-img">
+                    <img class="center-cropped" src="/img/Zhizhi.jpg">
+                    <a class="grid-pre fullbox" id="pimg5" href="#cimg5"></a>
+                    <div class="previewbox fullview" id="cimg5">
+                        <img class="center-cropped" src="/img/Zhizhi.jpg">
+                    </div>
+                    <a class="modal-img fullview" href="#pimg5"></a>
+                    <a class="blackout fullview"></a>
+                </div>
+            </div>
+
+                
+
+            </div> <!-- grid body -->
+
+            <hr>
+        </div>
+                
+                 
+
+
+        </div>
+
+
+        
+
+        
+        <script src="/js/pgsa-apps.js"></script>
+        <script>
+            var _pg = _pg || {};
+            _pg.sec = 'c'; _pg.ver = 'v1.0.1';
+            _pg.refresh = false; // true; //
+            _pg.purge = true;
+            _pg.init &&  (_pg.ready = _pg.init()) &&  (_pg.enc['dummy'] = 'secret');
+
+            var params = getQueryFromURL(location.href, decodeURIComponent);
+            _pg.heading = 'heading' in params ? params['heading']: 'Demo Template';
+
+            if(_pg.ready){
+                
+                // do something
+                _pg.ready = function(){
+                    _pg.log('ready to do something');
+
+
+                }
+                
+
+            }
+            
+
+            docReady(() => {
+                typeof _pg.ready == 'function' && _pg.ready();
+                // fix history navigation on hashchange
+                window.onpopstate = (e)=>{
+                    _pg.log(e.state, e.target.location);
+                    if(!e.state && !!e.target.location.hash){// further filter hash
+                        history.replaceState({'skip':true}, '', "?#");
+                    }else if(!!e.state && e.state.skip){
+                        history.back();
+                        history.replaceState({'skipped':true}, '', "?skipped=true");
+                    }else if(!!e.state && e.state.skipped){
+                        history.forward();
+                        history.replaceState({'skip':true}, '', "?skip=true#");
+                    }
+                    
+
+                }
+            });
+        </script>
+
+    </body>
+</html>
