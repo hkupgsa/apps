@@ -1,8 +1,8 @@
 
 
 /plan https://docs.google.com/spreadsheets/d/1Mm1g3Vcvvty-kJb0HQkpagtn6ZQrCNF8hvZBFpOoCpg/edit?usp=sharing 302
-/request https://docs.google.com/forms/d/e/1FAIpQLSc788xIW8FYIRgSqvY4tQg8P_nNwAibziXCFvdt2e45IPJQSA/viewform?usp=sf_link
-/drive https://drive.google.com/drive/folders/1OOfuEEYNihITO1RR9w50nRg2c26UYucU
+/feedback https://docs.google.com/forms/d/e/1FAIpQLSc788xIW8FYIRgSqvY4tQg8P_nNwAibziXCFvdt2e45IPJQSA/viewform?usp=sf_link
+/drive https://drive.google.com/drive/folders/0ACTWlMCH4cJjUk9PVA
 /group https://groups.google.com/g/it-pgsa
 /web https://hkupgsa.github.io
 /fb https://www.facebook.com/hkupgsa
@@ -29,8 +29,7 @@
 /wx/* https://mp.weixin.qq.com/s/:splat 200
 /sou type=:t query=:q https://weixin.sogou.com/weixin?type=:t&query=:q 200
 
-/embed/wx_latest /embed/wx?limit=15&json=1P0GRW6d2feNSB-ouWQ4U3J3vdcmP4pDat_XjqhlRnHE,1,R1C4 302
-/embed/wx_submit https://docs.google.com/forms/d/e/1FAIpQLScpTBBExgjyw-4-fr8-6DUWNJi_ABtS1H9Btyosk2GB-YAVog/viewform 302
+/wx_latest /embed/wx?limit=15&json=1P0GRW6d2feNSB-ouWQ4U3J3vdcmP4pDat_XjqhlRnHE,1,R1C4 302
+/wx_submit https://docs.google.com/forms/d/e/1FAIpQLScpTBBExgjyw-4-fr8-6DUWNJi_ABtS1H9Btyosk2GB-YAVog/viewform 302
 
-/recruit20 https://hku.au1.qualtrics.com/jfe/form/SV_eJpwypZHdHxGRNz 302
 
