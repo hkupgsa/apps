@@ -565,3 +565,6 @@ _pg.saveCard = function(canvas){
     );  
 }
 
+_pg.donate_sheet = function(sheedId, sn){
+    
+}
