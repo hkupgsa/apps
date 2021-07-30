@@ -26,10 +26,13 @@
 /js/pgsa-config.js /js/pgsa-config-en.js 200
 
 
-/api/sheetcalc/* https://shimo.im/api/sheetcalc/:splat 200
+/api/sheetcalc/*	https://shimo.im/api/sheetcalc/:splat	200
 
-/donate2021 https://shimo.im/forms/GpWqHgtpGKWkPR3j/fill Country=cn
-/donate2021 https://docs.google.com/forms/d/e/1FAIpQLSd9zetGnt38KN-kLrthndXLBAaVy2kU8h2lLfoFjFcfdAvGqw/viewform
+/donate2021	https://shimo.im/forms/GpWqHgtpGKWkPR3j/fill	302	Country=cn
+/donate2021	https://docs.google.com/forms/d/e/1FAIpQLSd9zetGnt38KN-kLrthndXLBAaVy2kU8h2lLfoFjFcfdAvGqw/viewform	302
+
+/donate/form2021	https://shimo.im/forms/GpWqHgtpGKWkPR3j/fill	302	Country=cn
+/donate/form2021	https://docs.google.com/forms/d/e/1FAIpQLSd9zetGnt38KN-kLrthndXLBAaVy2kU8h2lLfoFjFcfdAvGqw/viewform	302
 
 
 /wx/* https://mp.weixin.qq.com/s/:splat 200
