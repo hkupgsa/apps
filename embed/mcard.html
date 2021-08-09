@@ -25,6 +25,7 @@
             </div>
             <div class="mcard-foot">
                 <button class="btn" id="save-card">Save</button>
+                
             </div>
             
 
@@ -38,9 +39,11 @@
             _pg.purge = true;
             _pg.init &&  (_pg.ready = _pg.init()) &&  (_pg.enc['dummy'] = 'secret');
 
+
             _pg.card_styles = {
                 'default': {
                     background: {
+                        name: "Default",
                         path: '/css/card-default.jpg',
                         width: 1518, height: 957,
                         // other dimensions
@@ -79,6 +82,14 @@
                     }
                 }
             }
+            _pg.default_card_style = function(background_path, background_name){
+                let obj = JSON.parse(JSON.stringify(_pg.card_styles['default']));
+                obj.background.path = background_path;
+                obj.background.name = background_name;
+                return obj;
+            }
+            _pg.card_styles['since21'] = _pg.default_card_style('/css/card-since21.jpg', "New for 2021");
+            _pg.card_styles['donate21_special'] = _pg.default_card_style('/css/card-donate21.jpg', "Henan Donation Special");
             
             
 
@@ -87,13 +98,12 @@
             
             const heading = document.querySelector('.mcard h2');
             heading.innerHTML = _pg.heading;
-            let {surname, given_name, uno, since_year, style, qr, unverified, colorDark, avatar} = params;
+            let {surname, given_name, uno, since_year, style, qr, unverified, colorDark, avatar, check_uno} = params;
             var canvas = document.querySelector('.mcard-body canvas');
 
             
             if(_pg.ready && !!style){
-                let s = _pg.card_styles[style];
-                _pg.log('using style ', style, s);
+                
 
                 if(!!qr){
                     let qr_wrapper = document.createElement('div');
@@ -109,24 +119,83 @@
                     let ctx = avatar_canvas.getContext("2d");
                     jdenticon.drawIcon(ctx, avatar, avatar_size);
                 }
-                
-                let css = document.createElement('style');
-                css.innerHTML = `
-                @font-face {
-                    font-family: '${s.font.family}';
-                    src: url('${s.font.path}');
-                    font-style: normal;
-                }`;
-                document.head.appendChild(css);
-                // make sure fonts are loaded
-                document.fonts.load('30pt '+s.font.family).then(
-                    ()=> _pg.drawMCard(canvas, s, {surname, given_name, uno, since_year, unverified}, {qr:_pg.qr, avatar: _pg.avatar})
 
-                );
                 document.getElementById('save-card').addEventListener('click', ()=>{
                     _pg.saveCard(canvas);
                 });
+
+                let style_opts = style.split(',');
+                style = style_opts[0];
+                let s = _pg.card_styles[style];
+                _pg.log('using style ', style, s);
+
                 
+                
+                _pg.loaded_fonts = _pg.loaded_fonts || {};
+                function drawMCard(s, mark_uno){
+                    let _uno = String(uno);
+                    if(!!mark_uno){
+                        _uno = _uno.substr(0,5)+'XXXX'+_uno.substr(-1);
+                    }
+                    if(_pg.loaded_fonts[s.font.family]){
+                        return _pg.drawMCard(canvas, s, {surname, given_name, uno:_uno, since_year, unverified}, {qr:_pg.qr, avatar: _pg.avatar});
+                    }
+                    let css = document.createElement('style');
+                    css.innerHTML = `
+                    @font-face {
+                        font-family: '${s.font.family}';
+                        src: url('${s.font.path}');
+                        font-style: normal;
+                    }`;
+                    document.head.appendChild(css);
+                    // make sure fonts are loaded
+                    document.fonts.load('30pt '+s.font.family).then(
+                        ()=> {
+                            _pg.loaded_fonts[s.font.family] = true;
+                            return _pg.drawMCard(canvas, s, {surname, given_name, uno:_uno, since_year, unverified}, {qr:_pg.qr, avatar: _pg.avatar});
+                        }
+                    );
+                }
+                let mcard_foot = document.querySelector(".mcard-foot");
+                let checker = null; 
+                let sel = null;
+                if(typeof check_uno != 'undefined'){
+                    let L = document.createElement('label');
+                    L.innerHTML = '<input type="checkbox">Hide Number';
+                    mcard_foot.append(L);
+                    checker = mcard_foot.querySelector('input[type="checkbox"]');
+                    if(check_uno == "true"){
+                        checker.checked = true;
+                    }
+                }
+                
+
+                if(style_opts.length>1){
+                    let L = document.createElement('label');
+                    //sel = document.createElement("select");
+                    L.innerHTML = `Background <select><option value="${style}" selected>${s.background.name}</option>` +
+                      style_opts.slice(1).map((k)=>{
+                          let s = _pg.card_styles[k];
+                          return `<option value="${k}">${s.background.name}</option>`;
+                      }).join('') +'</select>';
+                    
+                    mcard_foot.prepend(L);
+                    sel = mcard_foot.querySelector('select');
+                    
+                }
+                sel && sel.addEventListener('change', (e)=>{
+                        return drawMCard(_pg.card_styles[sel.value], checker && checker.checked);
+                    });
+                checker && checker.addEventListener('change', (e)=>{
+                    let s = sel? _pg.card_styles[sel.value]: style;
+                    drawMCard(s, checker.checked);
+                    
+                });
+
+                
+
+                drawMCard(s, checker && checker.checked);
+
                 
                 
                 

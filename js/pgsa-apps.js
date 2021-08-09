@@ -141,7 +141,7 @@ function ajaxPOST(obj){
             obj.complete = null;
         }
     };
-    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+    xhr.setRequestHeader("Content-Type", obj.content_type || "application/x-www-form-urlencoded; charset=UTF-8");
     xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
     xhr.send(data);
 }
