@@ -12,7 +12,7 @@
 </script>
 
     </head>
-    <body>
+    <body style="background: none transparent">
         <div class="container mcard">
             <div class="mcard-heading">
                 <h2>HKU-PGSA 港大研會</h2>
@@ -34,7 +34,7 @@
         <script src="/js/pgsa-apps.js"></script>
         <script>
             var _pg = _pg || {};
-            _pg.sec = 'm'; _pg.ver = 'v1.0.1';
+            _pg.sec = 'm'; _pg.ver = 'v1.1.0';
             _pg.refresh = false; // true; //
             _pg.purge = true;
             _pg.init &&  (_pg.ready = _pg.init()) &&  (_pg.enc['dummy'] = 'secret');
@@ -67,7 +67,7 @@
                             border: 'white'
                         },
                         avatar: {
-                            x: 60, y: 520,
+                            x: 40, y: 240,
                             border: null
                         }
 
@@ -90,6 +90,8 @@
             }
             _pg.card_styles['since21'] = _pg.default_card_style('/css/card-since21.jpg', "New for 2021");
             _pg.card_styles['donate21_special'] = _pg.default_card_style('/css/card-donate21.jpg', "Henan Donation Special");
+            _pg.card_styles.donate21_special.pos.avatar.y = 30;
+            _pg.card_styles.donate21_special.pos.avatar.x = 30;
             
             
 
@@ -98,7 +100,7 @@
             
             const heading = document.querySelector('.mcard h2');
             heading.innerHTML = _pg.heading;
-            let {surname, given_name, uno, since_year, style, qr, unverified, colorDark, avatar, check_uno} = params;
+            let {surname, given_name, uno, since_year, style, qr, unverified, colorDark, avatar, check_uno, no_save, cors_token} = params;
             var canvas = document.querySelector('.mcard-body canvas');
 
             
@@ -111,18 +113,16 @@
                     _pg.qr = qr_wrapper.querySelector('canvas');
                     // QR code image data on qr_canvas
                 }
-                if(!!avatar &&  !!jdenticon){
-                    // check if image url
-                    const avatar_size = 256;
-                    let avatar_canvas = _pg.avatar = document.createElement('canvas');
-                    avatar_canvas.width = avatar_canvas.height = avatar_size;
-                    let ctx = avatar_canvas.getContext("2d");
-                    jdenticon.drawIcon(ctx, avatar, avatar_size);
-                }
+                
 
-                document.getElementById('save-card').addEventListener('click', ()=>{
-                    _pg.saveCard(canvas);
-                });
+                let btn_save = document.getElementById('save-card');
+                if(no_save){
+                    btn_save.remove();
+                }else{
+                    btn_save.addEventListener('click', ()=>{
+                        _pg.saveCard(canvas);
+                    })
+                };
 
                 let style_opts = style.split(',');
                 style = style_opts[0];
@@ -192,9 +192,61 @@
                     
                 });
 
-                
+                function drawAvatar(){
+                    return new Promise((resolve)=>{
 
-                drawMCard(s, checker && checker.checked);
+                        if(!avatar){
+                            return resolve(null);
+                        }
+
+                        const avatar_size = 256;
+                        let avatar_canvas = _pg.avatar = document.createElement('canvas');
+                        avatar_canvas.width = avatar_canvas.height = avatar_size;
+                        let ctx = avatar_canvas.getContext("2d");
+                        // check if image url
+                        if(cors_token && avatar.startsWith('http')){
+                            let avatar_url = avatar + 
+                            (avatar.split('?').length>1?"":"?") +
+                            "cors_token=" + cors_token + "&op_time=" + Date.now();// prevent cache
+                            // draw_image
+                            const abg = new Image();
+                            function draw_avatar(){
+                                let asize = abg.width<abg.height? abg.width: abg.height;
+                                let sx = (abg.width - asize) / 2 >> 0;
+                                let sy = (abg.height - asize) / 2 >> 0;
+                                ctx.drawImage(abg, sx, sy, asize, asize, 0, 0, avatar_size, avatar_size);
+                            }
+                            
+                            abg.onload = ()=>{
+                                draw_avatar();
+                                resolve(_pg.avatar);
+                            }
+                            if(!no_save){// required if need to export
+                                abg.crossOrigin = "Anonymous";
+                            }
+                            
+                            abg.src = avatar_url;
+                            return;
+                        }
+                        
+                        if(!!jdenticon){
+                            jdenticon.drawIcon(ctx, avatar, avatar_size);
+                            return resolve(_pg.avatar);   
+                        }  
+                        
+                        return resolve(null);   
+
+                    });
+                }
+
+                
+                drawAvatar().then(()=>{
+                    drawMCard(s, checker && checker.checked);
+                }).catch((err)=>{
+                    console.log('failed to load avatar.', err);
+                    drawMCard(s, checker && checker.checked);
+                });
+                
 
                 
                 

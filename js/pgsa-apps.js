@@ -129,7 +129,7 @@ function ajaxPOST(obj){
         data = typeof obj.data  == 'string' ? obj.data : null;
     }
 
-    xhr.open('POST', url, true);
+    xhr.open(obj.method  || 'POST', url, true);
     xhr.onreadystatechange = function(){
         if( xhr.readyState == 4 ){
             if( xhr.status >= 200 && xhr.status < 400 ){
@@ -212,7 +212,7 @@ _pg.store = function(_key, value, _ttl, _enc){
         try{
             tmp = JSON.parse(tmp);
         }catch(e){
-            this.console.log('err get storage:', _key);
+            console.log('err get storage:', _key);
             storage.removeItem(key);
             return null;
         }
@@ -532,12 +532,12 @@ _pg.drawMCard = function(canvas, style, obj, canvases){
         }
         if(!!avatar){
             const avatar_size = 256;
-            ctx.drawImage(avatar, style.pos.avatar.x, style.pos.avatar.y);
             if(!!style.pos.avatar.border){
                 ctx.strokeStyle='white';
                 ctx.strokeRect(style.pos.avatar.x-1, style.pos.avatar.y-1, 
                     avatar_size+2, avatar_size+2);
-                }
+            }
+            ctx.drawImage(avatar, style.pos.avatar.x, style.pos.avatar.y);
 
         }
         if(!!unverified){
@@ -565,6 +565,3 @@ _pg.saveCard = function(canvas){
     );  
 }
 
-_pg.donate_sheet = function(sheedId, sn){
-    
-}
