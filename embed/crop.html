@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">  
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Image Cropper</title>
+        <link type="text/css" rel="stylesheet" href="/css/wx-card.css"> 
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.js"></script>
+        <link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.css">
+        <style>
+
+            .crop-heading  p{
+                text-align: center;
+                color: #111111;
+            }
+            .crop-body {
+                
+                width: 100%;
+                
+                min-height: 360px;
+                max-height: 600px;
+
+                border: black 1px solid;
+            }
+            .crop-body .image-wrapper{
+                position: absolute;
+                text-align: center;/* affect image */
+                width: 100%;
+                max-width: 600px;
+                max-height: 300px;
+                margin: auto; padding: 0;
+            }
+            .image-wrapper img{
+                
+                object-fit: contain;
+                max-width: inherit; max-height: inherit;
+                object-position: center;
+                margin-left: auto; margin-right: auto;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="container croppr">
+            <div class="crop-heading">
+                <h2>Upload Profile Photo</h2>
+                <p> Pick an image or drop the file below </p>
+            </div>
+            <div class="crop-body">
+                <div class="image-wrapper">
+                <!--<img id="original-img" src="/img/reading.jpg"> -->
+                </div>
+
+
+            </div>
+            <div class="crop-foot">
+                <input type="file" accept="image/*" id="btn_file">
+                <button class="btn" id="btn_upload">Upload</button>
+            </div>
+
+
+
+        </div>
+        <script src="/js/pgsa-apps.js"></script>
+        <script>
+            var _pg = _pg || {};
+            _pg.sec = 'c'; _pg.ver = 'v1.1.0';
+            _pg.refresh = false; // true; //
+            _pg.purge = true;
+            _pg.init &&  (_pg.ready = _pg.init()) &&  (_pg.enc['dummy'] = 'secret');
+
+            var params = getQueryFromURL(location.href, decodeURIComponent);
+            _pg.heading = 'heading' in params ? params['heading']: 'Image Cropper';
+            let {vw, vh, bw, bh, fmt} = params;
+            if(fmt=='jpg') fmt = 'jpeg';
+
+            if(_pg.ready){
+                
+                // do something
+                _pg.ready = function(){
+                    _pg.log('ready to do something');
+
+                    //let ele = document.getElementById('original-img');
+                    let ele = document.querySelector('.image-wrapper');
+                    _pg.croppie = null;
+                    
+
+                    let btn_file = document.querySelector('input[type="file"]');
+                    btn_file.addEventListener('change', (e)=>{
+                        if(!_pg.croppie){
+                            _pg.croppie = new Croppie(ele, {
+                                enableExif: true,
+                                viewport: { width: vw || 256, height: vh || 256 },
+                                boundary: { width: bw || 300, height: bh || 300 },
+                                showZoomer: true,
+                                enableResize: true,
+                                enableOrientation: true,
+                                mouseWheelZoom: 'ctrl'
+                            });
+                        }
+                        _pg.croppie.bind({url: URL.createObjectURL(btn_file.files[0])});// TODO: revoke memory
+                    });
+                    let btn_upload = document.getElementById('btn_upload');
+                    btn_upload.addEventListener('click', (e)=>{
+                        _pg.croppie && _pg.croppie.result({type: 'blob', format: fmt || 'jpeg'}).then((blob)=>{
+                            if(window != window.parent){ // not top\
+                                window.parent.postMessage({
+                                    op: 'to_upload',
+                                    blob: blob,
+                                }, "*");
+                            }else
+                                console.log(blob);
+                        });
+                    });
+
+
+                    window.addEventListener('message', (e)=>{
+                        let src = e.source;
+                        let data = e.data;
+                        console.log('receive msg from origin ', e.origin || e.originalEvent.origin, data);
+                        switch(data.op){
+                            case 'add_avatar':
+                                console.log('not implemented!');
+                                break;
+                            default:
+                                console.log('unrecognized op', data.op);
+
+                            //
+                        }
+                    });
+
+
+
+                }
+                
+
+            }
+
+            
+
+            docReady(() => {
+                typeof _pg.ready == 'function' && _pg.ready();
+            });
+        </script>
+
+    </body>
+</html>

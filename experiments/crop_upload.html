@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">  
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Cropped Image Upload Demo</title>
+        <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.2/dist/FileSaver.min.js"></script>
+
+    </head>
+    <body>
+        <iframe src="/embed/crop.html?width=256&height=384&fmt=jpeg" width="100%" height="500px" frameborder="0" style="border: none; padding: 0; margin: 0;" allowtransparency allowfullscreen webkitallowfullscreen>Loading Image Cropper</iframe>
+
+        <script src="/js/pgsa-apps.js"></script>
+        <script>
+            var _pg = _pg || {};
+            _pg.sec = 'c'; _pg.ver = 'v1.1.0';
+            _pg.refresh = false; // true; //
+            _pg.purge = true;
+            _pg.init &&  (_pg.ready = _pg.init()) &&  (_pg.enc['dummy'] = 'secret');
+
+            var params = getQueryFromURL(location.href, decodeURIComponent);
+
+            window.addEventListener('message', (e)=>{
+                let src = e.source;
+                let data = e.data;
+                console.log('receive msg from origin ', e.origin || e.originalEvent.origin);
+                switch(data.op){
+                    case 'to_upload':
+                    _pg.blobs = _pg.blobs || [];
+                    _pg.blobs.push(data.blob);
+                    return typeof saveAs == 'undefined'? null: saveAs(data.blob, 'demo_crop.jpg');
+                    //
+                    default:
+                        console.log('unrecognized op', data.op);
+                }
+            });
+        </script>
+    </body>
+</html>

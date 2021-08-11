@@ -118,22 +118,34 @@ function ajaxPOST(obj){
     let data = null;
     if (typeof obj.data == "object"){
         var d = obj.data;
-        data = [];
-        for(var k in d) {
-            if (d.hasOwnProperty(k)){
-                data.push(k + "=" + encodeURIComponent(d[k]));
+        if(!obj.form){ // form urlencoded
+            data = [];
+            for(let k in d) {
+                if (d.hasOwnProperty(k)){
+                    data.push(k + "=" + encodeURIComponent(d[k]));
+                }
+            }
+            data = data.join("&");
+
+        }else{ // formdata
+            data = new FormData();
+            obj.blob && ( data.enctype="multipart/form-data" );
+            for(let k in d) {
+                if (d.hasOwnProperty(k)){
+                    data.append(k,  d[k]);
+                }
             }
         }
-        data = data.join("&");
+        
     }else{
         data = typeof obj.data  == 'string' ? obj.data : null;
     }
-
     xhr.open(obj.method  || 'POST', url, true);
+    obj.blob && ( xhr.responseType = "blob" );
     xhr.onreadystatechange = function(){
         if( xhr.readyState == 4 ){
             if( xhr.status >= 200 && xhr.status < 400 ){
-                obj.success && obj.success(xhr.responseText);
+                obj.success && obj.success(obj.blob? xhr.response.blob(): xhr.responseText);
             } else {
                 obj.error && obj.error(xhr);
             }
@@ -141,7 +153,9 @@ function ajaxPOST(obj){
             obj.complete = null;
         }
     };
-    xhr.setRequestHeader("Content-Type", obj.content_type || "application/x-www-form-urlencoded; charset=UTF-8");
+    if(obj.content_type!=false)
+        xhr.setRequestHeader("Content-Type", obj.content_type || "application/x-www-form-urlencoded; charset=UTF-8");
+        
     xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
     xhr.send(data);
 }

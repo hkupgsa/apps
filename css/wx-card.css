@@ -41,7 +41,7 @@ body::-webkit-scrollbar {
 }
 
 
-.container.articles,.container.mcard,.container.grid{
+.container.articles,.container.mcard,.container.grid,.container.croppr{
 
 width: var(--container-width, 100%);  
 margin: auto;
@@ -153,7 +153,7 @@ margin-right:3%;
     line-height: 1px;
 }
 
-.mcard-foot {
+.mcard-foot, .crop-foot {
     margin: 5px; 
     text-align: center; 
 }

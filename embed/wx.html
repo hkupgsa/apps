@@ -23,7 +23,7 @@
         <script src="/js/pgsa-apps.js"></script>
         <script>
             var _pg = _pg || {};
-            _pg.sec = 's'; _pg.ver = 'v1.0.1';
+            _pg.sec = 's'; _pg.ver = 'v1.1.0';
             _pg.refresh = false; // true; //
             _pg.purge = true;
             _pg.init &&  (_pg.ready = _pg.init()) &&  (_pg.enc['dummy'] = 'secret');
@@ -48,7 +48,7 @@
                 if(sheet_json.length == 3){
                     reused = _pg.store(sheet_json.join(','));
                     if(reused != null){
-                        _pg.log('resued sheet data', reused);
+                        _pg.log('reused sheet data', reused);
                         articles = reused.split(',');
                     }
                     _pg.log('auto load from sheet ...');
