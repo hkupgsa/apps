@@ -33,6 +33,8 @@
             var params = getQueryFromURL(location.href);
             var _sep = 'sep' in params? params['sep']: ',';
             var sheet_json = 'json' in params? params['json'].split(','): [];
+            var sheet_tsv = 'tsv' in params? params['tsv'].split(','): [];
+            var reused_key = 'reused' in params? params['reused']: '';
             var articles = 'articles' in params ? params['articles'].split(_sep): [];
             _pg.heading = 'heading' in params ? decodeURIComponent(params['heading']): 'HKU-PGSA 港大研會';
             _pg.order = 'order' in params? params['order']: 'descending';
@@ -45,35 +47,60 @@
             _pg.lazy_lock = false;
             if(_pg.ready){
                 let reused = null;
-                if(sheet_json.length == 3){
-                    reused = _pg.store(sheet_json.join(','));
-                    if(reused != null){
-                        _pg.log('reused sheet data', reused);
-                        articles = reused.split(',');
+                let ajax_url = null, ajax_callback = null;
+                if(sheet_tsv.length == 3){  // with priority
+                    if(!reused_key){
+                        reused_key = sheet_tsv.join(',');
                     }
-                    _pg.log('auto load from sheet ...');
+                    reused = _pg.store(reused_key);
+                    let [ss_id, s_num, cell] = sheet_tsv;
+                    ajax_url = `/spreadsheets/d/e/${ss_id}/pub?gid=${s_num}&single=true&output=tsv`;
+                    ajax_callback = (data) => {
+                        let _table = {};
+                        data.split(/\r?\n/).forEach((line, ri)=>{
+                            line.split('\t').forEach((e, cj)=>{
+                                if(!!e) _table[`R${ri+1}C${cj+1}`] = e;
+                            });
+                        });
+                        return _table[cell] || '';
+                    };
+                }else if(sheet_json.length == 3){
+                    if(!reused_key){
+                        reused_key = sheet_json.join(',');
+                    }
+                    reused = _pg.store(reused_key);
                     let [ss_id, s_num, cell] = sheet_json;
-                    // async update after lazy load
-                    ajax(`/feeds/cells/${ss_id}/${s_num}/public/basic/${cell}?alt=json`).then((data)=>{
+                    ajax_url = `/feeds/cells/${ss_id}/${s_num}/public/basic/${cell}?alt=json`;
+                    ajax_callback = (data) => {
                         data = JSON.parse(data);// without jQuery we need to parse manually
-                        articles = data.entry.content.$t.split(',');
+                        return data.entry.content.$t;
+                    }
+                }
+                if(!!reused){
+                    _pg.log('reused sheet data', reused);
+                    articles = reused.split(',');
+                }
+                if(!!ajax_url){
+                    _pg.log('auto load from sheet ...');
+                    // async update after lazy load
+                    ajax(ajax_url).then((data)=>{
+                        articles = ajax_callback(data).split(',');
                         articles = articles.filter((e,i,arr)=>arr.indexOf(e)==i);
                         _pg.log('obtained unique ', articles);
                         if(reused != articles.join(',')){
                             reused = articles.join(',');
-                            _pg.log('sheet json with update');
-                            _pg.store(sheet_json.join(','), reused, 86400*3);// update value, expire in 3 days
+                            _pg.log('sheet data with update');
+                            _pg.store(reused_key, reused, 86400*3);// update value, expire in 3 days
                             _pg.load_articles(
                                 li, 
                                 (_pg.limit>0? articles.slice(-_pg.limit): articles).map((e)=>_pg.retrieveArticle(e))
                             );
                         }else{
-                            _pg.log('sheet json without update');
-                            _pg.store(sheet_json.join(','), reused, 86400*2);// refresh time, expire in 2 days
+                            _pg.log('sheet data without update');
+                            _pg.store(reused_key, reused, 86400*2);// refresh time, expire in 2 days
                         }
                         return articles;
-
-                    }).catch((err)=>[]);
+                    }).catch((err)=>{console.log('error', err); return [];});
 
                 }
                 _pg.load_articles(
