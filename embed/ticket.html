@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">  
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>PGSA Membership Card</title>
+        <link type="text/css" rel="stylesheet" href="/css/wx-card.css"> 
+        <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.2/dist/FileSaver.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+</script>
+
+    </head>
+    <body style="background: none transparent">
+        <div class="container mcard">
+            <div class="mcard-heading">
+                <h2>HKU-PGSA 港大研會</h2>
+                <div class="spinner"></div>
+            </div>
+            <div style="margin: auto; padding: 0;" class="mcard-body" >
+                <div class="canvas-wrapper">
+                    <canvas width="500"  height="350"></canvas>
+                </div>
+            </div>
+            <div class="mcard-foot">
+                <button class="btn" id="save-card">Save</button>
+                
+            </div>
+            
+
+        </div>
+       
+        <script src="/js/pgsa-apps.js"></script>
+        <script>
+            var _pg = _pg || {};
+            _pg.sec = 'm'; _pg.ver = 'v1.1.0';
+            _pg.refresh = false; // true; //
+            _pg.purge = true;
+            _pg.init &&  (_pg.ready = _pg.init()) &&  (_pg.enc['dummy'] = 'secret');
+
+
+            _pg.card_styles = {
+                'default': {
+                    background: {
+                        name: "Default",
+                        path: '/css/ticket-singcon21.png',
+                        width: 2363, height: 945,
+                        // other dimensions
+
+                    },
+                    qrsize: 256, // 2cm?
+                    pos: {
+                        
+                        tno1: {
+                            align: 'center',
+                            x: 2091, y: 530
+                        },
+                        tno2: {
+                            align: 'center',
+                            x: 943, y: 76
+                        },
+                        qr: {
+                            x: 1500, y: 172,
+                            border: 'white'
+                        },
+                        
+
+                    },
+                    font: {
+                        color: 'black',
+                        color1: 'rgb(2,2,2)',
+                        color2: 'rgb(239, 117, 117)',
+                        size1: '125px',
+                        size2: '75px',
+                        family: 'Agency-FB',
+                        path: '/css/agency-fb-bold.ttf'
+                    },
+                
+                }
+            }
+   
+            
+            
+            var params = getQueryFromURL(location.href, decodeURIComponent);
+            _pg.heading = 'heading' in params ? params['heading']: 'PGSA SingCon Ticket';
+            
+            const heading = document.querySelector('.mcard h2');
+            heading.innerHTML = _pg.heading;
+            let {tno, tcode, style, qr, colorDark, no_save, cors_token, qrsize} = params;
+            var canvas = document.querySelector('.mcard-body canvas');
+
+            
+            if(_pg.ready && !!style){
+                if(!qr && !!tcode){
+                    let qr_pre = "https://www.pgsa.hku.hk/singcon21/vote?code=";
+                    qr = qr_pre + tcode;
+                    
+                }
+
+                if(!!qr){
+                    if(!qrsize){
+                        qrsize = 256;
+                    }
+                    console.log(qr, qrsize);
+                    let qr_wrapper = document.createElement('div');
+                    
+                    _pg.qr_obj = new QRCode(qr_wrapper, {text: qr,  width: qrsize, height: qrsize, colorDark: colorDark || '#020202', colorLight: 'rgba(255,255,255,0)'});
+                    _pg.qr = qr_wrapper.querySelector('canvas');
+                    // QR code image data on qr_canvas
+                }
+                
+
+                let btn_save = document.getElementById('save-card');
+                if(no_save){
+                    btn_save.remove();
+                }else{
+                    btn_save.addEventListener('click', ()=>{
+                        _pg.saveCard(canvas, tno, 'Singcon_Final_');
+                    });
+                };
+
+                let style_opts = style.split(',');
+                style = style_opts[0];
+                let s = _pg.card_styles[style];
+                _pg.log('using style ', style, s);
+
+                
+                
+                _pg.loaded_fonts = _pg.loaded_fonts || {};
+                function drawTicket(s){
+                    let _tno = String(tno);
+                    if(_pg.loaded_fonts[s.font.family]){
+                        return _pg.drawTickdet(canvas, s, {tno:_tno, qrsize}, {qr:_pg.qr});
+                    }
+                    let css = document.createElement('style');
+                    css.innerHTML = `
+                    @font-face {
+                        font-family: '${s.font.family}';
+                        src: url('${s.font.path}');
+                        font-style: normal;
+                    }`;
+                    document.head.appendChild(css);
+                    // make sure fonts are loaded
+                    document.fonts.load('100px '+s.font.family).then(
+                        ()=> {
+                            _pg.loaded_fonts[s.font.family] = true;
+                            return _pg.drawTicket(canvas, s, {tno:_tno, qrsize}, {qr:_pg.qr});
+                        }
+                    );
+                }
+                drawTicket(s);
+
+               
+               
+
+
+                
+                
+                
+            }
+            
+
+
+        </script>
+    </body>
+</html>
