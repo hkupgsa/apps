@@ -493,7 +493,7 @@ _pg.retrieveArticle = async function (fid, ttl){
 // canvas drawing
 
 _pg.drawTicket = function(canvas, style, obj, canvases){
-    let {tno, qrsize} = obj;
+    let {tno, qrsize, add_to} = obj;
     let {qr} = canvases || {};
     let bg = new Image();
     
@@ -519,7 +519,9 @@ _pg.drawTicket = function(canvas, style, obj, canvases){
         if(!!qr){
             ctx.drawImage(qr, style.pos.qr.x - qrsize/2, style.pos.qr.y - qrsize/2);
         }
-
+        if(!!add_to){
+            add_to.file(tno + '.png', canvas.toDataURL("image/png").split('base64,')[1], {base64: true});
+        }
 
 
     }

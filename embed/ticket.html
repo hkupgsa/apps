@@ -4,10 +4,11 @@
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">  
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>PGSA Membership Card</title>
+        <title>PGSA Ticket Demo</title>
         <link type="text/css" rel="stylesheet" href="/css/wx-card.css"> 
         <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.2/dist/FileSaver.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/jszip@3.1.5/dist/jszip.min.js"></script>
 </script>
 
     </head>
@@ -87,7 +88,44 @@
             const heading = document.querySelector('.mcard h2');
             heading.innerHTML = _pg.heading;
             let {tno, tcode, style, qr, colorDark, no_save, cors_token, qrsize} = params;
+            let style_opts = style.split(',');
+            style = style_opts[0];
+            let s = _pg.card_styles[style];
             var canvas = document.querySelector('.mcard-body canvas');
+
+            function addto_zip(folder, tno, base64_png){
+                folder.file(tno + '.png', base64_png.split('base64,')[1], {base64: true});
+            }
+            function store_zip(codes){
+                var zip = new JSZip();
+                
+                let qr_pre = "https://www.pgsa.hku.hk/singcon21/vote?code=";
+                for(let ii=1;ii<=codes.length;++ii){
+                    let _tno = String(ii).padStart(3,"0");
+                    let qr_wrapper = document.createElement('div');
+                    let qr = qr_pre + codes[ii-1];
+                    let qr_obj = new QRCode(qr_wrapper, {text: qr,  width: qrsize, height: qrsize, colorDark: colorDark || '#020202', colorLight: 'rgba(255,255,255,0)'});
+                    let qrc = qr_wrapper.querySelector('canvas');
+                    _pg.drawTicket(canvas, s, {tno:_tno, qrsize, add_to: zip}, {qr:qrc})
+
+                    
+                }
+                return zip;
+                
+
+            }
+            function save_zip(zip, file_name){
+                var file_name = file_name || "Tickets.zip";
+                zip.generateAsync({
+                    type: "blob"
+                })
+                .then(function(content) {
+                    // see FileSaver.js
+                    saveAs(content, file_name);
+                });
+            }
+
+            
 
             
             if(_pg.ready && !!style){
@@ -119,9 +157,7 @@
                     });
                 };
 
-                let style_opts = style.split(',');
-                style = style_opts[0];
-                let s = _pg.card_styles[style];
+                
                 _pg.log('using style ', style, s);
 
                 
