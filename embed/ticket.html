@@ -49,7 +49,7 @@
                         // other dimensions
 
                     },
-                    qrsize: 256, // 2cm?
+                    qrsize: 300, // 2cm?
                     pos: {
                         
                         tno1: {
@@ -92,6 +92,7 @@
             style = style_opts[0];
             let s = _pg.card_styles[style];
             var canvas = document.querySelector('.mcard-body canvas');
+            let qr_pre = "https://www.pgsa.hku.hk/singcon21/vote?code=";
 
             function addto_zip(folder, tno, base64_png){
                 folder.file(tno + '.png', base64_png.split('base64,')[1], {base64: true});
@@ -99,7 +100,7 @@
             function store_zip(codes){
                 var zip = new JSZip();
                 
-                let qr_pre = "https://www.pgsa.hku.hk/singcon21/vote?code=";
+                
                 for(let ii=1;ii<=codes.length;++ii){
                     let _tno = String(ii).padStart(3,"0");
                     let qr_wrapper = document.createElement('div');
@@ -125,19 +126,14 @@
                 });
             }
 
-            
-
-            
             if(_pg.ready && !!style){
                 if(!qr && !!tcode){
-                    let qr_pre = "https://www.pgsa.hku.hk/singcon21/vote?code=";
                     qr = qr_pre + tcode;
-                    
                 }
 
                 if(!!qr){
                     if(!qrsize){
-                        qrsize = 256;
+                        qrsize = 300;
                     }
                     console.log(qr, qrsize);
                     let qr_wrapper = document.createElement('div');
@@ -163,6 +159,7 @@
                 
                 
                 _pg.loaded_fonts = _pg.loaded_fonts || {};
+                
                 function drawTicket(s){
                     let _tno = String(tno);
                     if(_pg.loaded_fonts[s.font.family]){

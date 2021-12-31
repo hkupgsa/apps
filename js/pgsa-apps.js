@@ -492,6 +492,41 @@ _pg.retrieveArticle = async function (fid, ttl){
 
 // canvas drawing
 
+_pg.drawTicketAsync = function (canvas, style, obj, canvases){ // TODO: test
+    return new Promise(function(resolve, reject){
+        let {tno, qrsize} = obj;
+        let {qr} = canvases || {};
+        let bg = new Image();
+        
+        let ctx = canvas.getContext('2d');
+        bg.onload = ()=>{
+            canvas.width=bg.width;
+            canvas.height=bg.height;
+            //_pg.log(bg.width, bg.height);
+            ctx.drawImage(bg, 0, 0);//
+
+            // drawing ticket no.
+
+            ctx.font=style.font.size1+' '+style.font.family;
+            ctx.fillStyle=style.font.color1;
+            ctx.textAlign = style.pos.tno1.align; // 'center',
+            ctx.fillText(tno, style.pos.tno1.x, style.pos.tno1.y);
+
+            ctx.font=style.font.size2+' '+style.font.family;
+            ctx.fillStyle=style.font.color2;
+            ctx.textAlign = style.pos.tno2.align; // 'center',
+            ctx.fillText(tno, style.pos.tno2.x, style.pos.tno2.y);
+
+            if(!!qr){
+                ctx.drawImage(qr, style.pos.qr.x - qrsize/2, style.pos.qr.y - qrsize/2);
+            }
+            
+            resolve({tno:tno, png_base64: canvas.toDataURL("image/png")});// return base64_img
+        }
+        bg.src = style.background.path;
+    });
+}
+
 _pg.drawTicket = function(canvas, style, obj, canvases){
     let {tno, qrsize, add_to} = obj;
     let {qr} = canvases || {};
