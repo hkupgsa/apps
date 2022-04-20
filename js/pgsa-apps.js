@@ -28,7 +28,7 @@ window.getMeta = function(name, dom){
 }
 
 // from WeChat
-window.setPublishTime = function(e,t,s,o){ // now:secs, publish:secs, date_str, dom_element
+window.setPublishTime = function(e,t,s,o){ // now:secs (deprecated), publish:secs, date_str (deprecated), dom_element
     var n="",i=86400,a=new Date(1e3*e),d=1*t,f=s||"";
     a.setHours(0),a.setMinutes(0),a.setSeconds(0);
     var r=a.getTime()/1e3;
@@ -51,7 +51,16 @@ window.setPublishTime = function(e,t,s,o){ // now:secs, publish:secs, date_str, 
     o.innerText=f;
     };
     },10));
-}
+};
+
+window.setPublishTime_new = function(e,t,n,i){ // t: publish_time, i: dom_element
+    var o=new Date(1e3*(1*t));
+    var c=function(e){
+        return "0".concat(e).slice(-2)
+    };
+    var u = o.getFullYear()+"-"+c(o.getMonth()+1)+"-"+c(o.getDate())+" "+c(o.getHours())+":"+c(o.getMinutes());
+    i && (i.innerText=u);
+};
 
 String.prototype.html = function(encode) {
     var replace =["&#39;", "'", "&quot;", '"', "&nbsp;", " ", "&gt;", ">", "&lt;", "<", "&yen;", "¥", "&amp;", "&"];
@@ -288,7 +297,7 @@ _pg.purgeStore = function(_ver){
 
 _pg.init = function(){
     _pg.sec = _pg.sec || 'h'; // default section home;
-    _pg.ver = _pg.ver || 'v1.0.1'; // default version 1; 
+    _pg.ver = _pg.ver || 'v1.1.0'; // default version 1; 
     _pg.enc = _pg.enc || {}; // encryption keys;
     _pg.sep = ":"; _pg.ver_sep = ".";
     _pg.now = opTime();
@@ -373,7 +382,7 @@ _pg.one_card = function(arr){
     });
     let dom_ele = card.querySelector(`#s_${fid} .publish_time`);
     //_pg.log(dom_ele);
-    setPublishTime(_pg.now, extra.publish_time, extra.publish_date, dom_ele);
+    setPublishTime_new(_pg.now, extra.publish_time, extra.publish_date, dom_ele);
     return card;
 
 }
@@ -437,6 +446,7 @@ _pg.parseArticle = function(data){
         setting = setting.length? setting[0].innerHTML: '';
 
         var re_publish = /var\s+\w+\s*=\s*"(\d+)",\s*\w+\s*="(\d+)",\s*\w+\s*=\s*"([^"]+)"/g;
+        var re_publish_new = /"(\d{10})"/g;
         var re_logo = /var\s+round_head_img\s*=\s*"([^"]+)"/g;
         var re_nickname = /var\s+nickname\s*=\s*"([^"]+)"/g;
         
@@ -447,14 +457,15 @@ _pg.parseArticle = function(data){
         }
         image_url = image_url.replace('http://', '//');
         // get publish time and round logo
-        let publish_res = re_publish.exec(publish);
+        let publish_res = re_publish_new.exec(publish);
+        //console.log(publish_res, publish);
         let logo_res = re_logo.exec(setting);
         let nickname_res = re_nickname.exec(setting);
         // _pg.log(publish_res, logo_res, nickname_res);
         if(!!publish_res){
-            extra.retrieve_time = publish_res[1]; 
-            extra.publish_time = publish_res[2]; 
-            extra.publish_date = publish_res[3];
+            extra.retrieve_time = 0; //publish_res[1]; 
+            extra.publish_time = publish_res[1]; //publish_res[2]; 
+            extra.publish_date = 0; //publish_res[3];
         }
         if(!!logo_res){
             extra.round_logo = logo_res[1].replace('http://', '//');
