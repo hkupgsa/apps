@@ -21,6 +21,7 @@
 
             var params = getQueryFromURL(location.href, decodeURIComponent);
 
+            // test receive from iframe
             window.addEventListener('message', (e)=>{
                 let src = e.source;
                 let data = e.data;

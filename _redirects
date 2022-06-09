@@ -2,14 +2,19 @@
 
 /plan https://docs.google.com/spreadsheets/d/1Mm1g3Vcvvty-kJb0HQkpagtn6ZQrCNF8hvZBFpOoCpg/edit?usp=sharing 302
 /feedback https://docs.google.com/forms/d/e/1FAIpQLSc788xIW8FYIRgSqvY4tQg8P_nNwAibziXCFvdt2e45IPJQSA/viewform?usp=sf_link
-/drive https://drive.google.com/drive/folders/0ACTWlMCH4cJjUk9PVA
-/group https://groups.google.com/g/it-pgsa
+/guide https://pgsa.gitbook.io/guide 302
+/drive https://connecthkuhk.sharepoint.com/:f:/r/sites/ITO_PGSA/Shared%20Documents/General?e=Y4cMTC 302
+/onedrive https://1drv.ms/u/s!Auu1cvE6jGgiaf8t5wbWMNyvR6U?e=9oErwI 302
+/group https://groups.google.com/g/pgsa-tech 302
+/msteams https://teams.microsoft.com/l/team/19%3aIqPSpO8bKnik6B-46FaLG6qN0w-AArDBA1Z681s6Tcs1%40thread.tacv2/conversations?groupId=b1829c3b-4002-4c22-8163-b281a344d838&tenantId=e80d8e75-52b9-4839-a358-87abb93b3567 302
+
+/sql-dev https://remotemysql.com/phpmyadmin/
+/official https://www.pgsa.hku.hk
 /web https://hkupgsa.github.io
 /fb https://www.facebook.com/hkupgsa
 /ig https://www.instagram.com/hkupgsa
 /tw https://twitter.com/hkupgsa
 /yt https://www.youtube.com/channel/UCHQ34dXVGWUX1FRvnIBB4pg 302
-/mp https://weixin.sogou.com/weixin?query=hkupgsa 302
 /bb https://space.bilibili.com/676038966 302
 
 
@@ -36,7 +41,6 @@
 
 
 /wx/* https://mp.weixin.qq.com/s/:splat 200
-/sou type=:t query=:q https://weixin.sogou.com/weixin?type=:t&query=:q 200
 
 /wx_latest /embed/wx?limit=15&json=1P0GRW6d2feNSB-ouWQ4U3J3vdcmP4pDat_XjqhlRnHE,1,R1C4 302
 /wx_submit https://docs.google.com/forms/d/e/1FAIpQLScpTBBExgjyw-4-fr8-6DUWNJi_ABtS1H9Btyosk2GB-YAVog/viewform 302
