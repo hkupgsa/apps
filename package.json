@@ -1,0 +1,29 @@
+{
+  "name": "pgsa-apps",
+  "version": "1.0.0",
+  "description": "Web Apps for HKUPGSA Website",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack",
+    "dev": "netlify dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hkupgsa/apps.git"
+  },
+  "keywords": [
+    "Netlify"
+  ],
+  "author": "cs.pgsa",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hkupgsa/apps/issues"
+  },
+  "homepage": "https://github.com/hkupgsa/apps#readme",
+  "devDependencies": {
+    "terser-webpack-plugin": "^5.3.3",
+    "webpack": "^5.73.0",
+    "webpack-cli": "^4.9.2"
+  }
+}

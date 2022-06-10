@@ -1,57 +1,6 @@
 // Utilities
 
-window.opTime = (scale) => (new Date().getTime() / (scale ||  1e3) ) >> 0;
-
-window.encF = function(plain, key){ // assuming string input
-    if(!key){
-        return plain;// skip
-    }
-    return plain; // TODO: AES CBC
-}
-
-window.getQueryFromURL = function(url, decode) {
-    decode = decode || ( (e)=>e );
-    url = url || 'https://example.hku.hk/s?a=b#rd'; 
-    let tmp = url.split('?'),
-        query = (tmp[1] || "").split('#')[0].split('&'),
-        params = {};
-    for (let i=0; i<query.length; i++) {
-        let arg = query[i].split('=');
-        params[decode(arg[0])] = decode(arg[1]);
-    }
-   
-    return params;
-};
-
-window.getMeta = function(name, dom){
-    return dom.querySelector(`meta[property="${name}"]`).getAttribute('content');
-}
-
-// from WeChat
-window.setPublishTime = function(e,t,s,o){ // now:secs (deprecated), publish:secs, date_str (deprecated), dom_element
-    var n="",i=86400,a=new Date(1e3*e),d=1*t,f=s||"";
-    a.setHours(0),a.setMinutes(0),a.setSeconds(0);
-    var r=a.getTime()/1e3;
-    a.setDate(1),a.setMonth(0);
-    var l=a.getTime()/1e3;
-    if(d>=r)n="Today";
-    else if(d>=r-i)n="Yesterday";
-    else if(d>=r-2*i)n="2 days ago";
-    else if(d>=r-3*i)n="3 days ago";
-    else if(d>=r-4*i)n="4 days ago";
-    else if(d>=r-5*i)n="5 days ago";
-    else if(d>=r-6*i)n="6 days ago";
-    else if(d>=r-14*i)n="1 week ago";
-    else if(d>=l){
-    var c=f.split("-");
-    n="%s/%s".replace("%s",parseInt(c[1],10)).replace("%s",parseInt(c[2],10));
-    }else n=f;
-    o&&(o.innerText=n,setTimeout(function(){
-    o.onclick=function(){
-    o.innerText=f;
-    };
-    },10));
-};
+import "./weixin.js";
 
 window.setPublishTime_new = function(e,t,n,i){ // t: publish_time, i: dom_element
     var o=new Date(1e3*(1*t));
@@ -80,6 +29,13 @@ String.prototype.html = function(encode) {
 window.isInWeixinApp = function() {
     return /MicroMessenger/.test(navigator.userAgent);
 };
+
+window.encF = function(plain, key){ // assuming string input
+    if(!key){
+        return plain;// skip
+    }
+    return plain; // TODO: AES CBC
+}
 
 function ajax(url, method) {
     method = method || 'GET';
@@ -118,6 +74,7 @@ function ajax(url, method) {
 
 	});
 };
+window.ajax = ajax;
 
 // TODO: proxify
 function ajaxPOST(obj){
@@ -168,6 +125,7 @@ function ajaxPOST(obj){
     xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
     xhr.send(data);
 }
+window.ajaxPOST = ajaxPOST;
 
 
 function dataURItoBlob(dataURI) {
@@ -205,11 +163,13 @@ function docReady(fn) {
         document.addEventListener("DOMContentLoaded", fn);
     }
 }
+window.docReady = docReady;
 
 
 // Namespace _pg
 
-var _pg = _pg || {}; // config object
+window._pg = window._pg || {}; // config object
+let _pg = window._pg;
 
 
 _pg.log = function(...args){
@@ -217,6 +177,8 @@ _pg.log = function(...args){
         console.log(...args);
     }
 }
+
+_pg.ajax = ajaxPOST; // TODO: promisify
 
 /* Usage: 
       (1) store(key) - get value
@@ -399,7 +361,7 @@ _pg.load_articles = async function (li, info, check_lock){
     }
     
     console.log('loading articles ...');
-    for await (arr of info){// in order
+    for await (let arr of info){// in order
         try{
             let card = _pg.one_card(arr);  
             if(!!card){
@@ -668,3 +630,134 @@ _pg.saveCard = function(canvas, uno, pre){
     );  
 }
 
+
+// Models
+
+// handling local image edit and upload
+_pg.Photo = class {
+    constructor(){
+        this.data = null;
+        this.type = null;
+        this.name = null;
+        this.url = null; // updated when uploaded
+        this.thumb = null;
+        this.dom_ele = null;
+    }
+    static upload_url = null;
+    set(data, type, name){
+        this.data = data;
+        this.type = type;
+        this.name = name;
+    }
+    get(){
+        return this.data;
+    }
+    upload(){ // TODO: notify when done
+        return new Promise((resolve, reject)=>{
+            if(!this.data){
+                reject("No data");
+                return;
+            }
+          
+            if(!this.name){
+                reject("No name");
+                return;
+            }
+            let formData = new FormData();
+            formData.append("file", this.data);
+            formData.append("filename", this.name);
+            _pg.ajax({
+                url: constructor.upload_url,
+                method: 'POST',
+                data: formData,
+            }).then(res=>{
+                this.url = res.url;
+                this.thumb = res.thumb; // thumbnail url
+                resolve(res);
+            }).catch(err=>{
+                reject(err);
+            });
+        });
+    }
+    pick(){ // should be inited with a dom element
+        return new Promise((resolve, reject)=>{
+            let input = document.createElement('input');
+            input.type = 'file';
+            input.accept = this.type;
+            input.onchange = (e)=>{
+                let file = e.target.files[0];
+                this.name = file.name;
+                this.data = file;
+                resolve(file);
+            }
+            input.click();
+        });
+    }
+    crop(x, y, w, h){
+        return new Promise((resolve, reject)=>{
+            if(!this.data){
+                reject("No data");
+                return;
+            }
+            let canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            let ctx = canvas.getContext('2d');
+            let img = new Image();
+            img.onload = ()=>{
+                ctx.drawImage(img, x, y, w, h, 0, 0, w, h);
+                this.data = canvas.toDataURL("image/jpeg");
+                resolve(this.data);
+            }
+            img.src = this.data;
+        });
+    }
+    fullscreen(){
+        if(!this.dom_ele){ // may use a common one
+            this.dom_ele = document.createElement('div'); // then add to DOM
+            this.dom_ele.addEventListener('click', (e)=>{
+                this.dom_ele.display = 'none';
+                e.stopPropagation();
+            });
+        }
+        this.dom_ele.display = 'block';
+        
+    }
+
+}
+
+_pg.Album = class {
+    constructor(){
+        this.prefix = '';
+        this.photos = [];
+        this.enabled = false;
+
+    }
+    addPhoto(photo){
+        if(_pg.Photo.prototype == photo.constructor){
+            this.photos.push(photo.url);
+        }else{
+            this.photos.push(photo);
+        }
+    }
+    getPhoto(uno){
+        return this.prefix + this.photos[uno];
+    }
+    getPhotos(){
+        return this.photos.map(p=>this.prefix+p);
+    }
+    getPhotoCount(){
+        return this.photos.length;
+    }
+    render(){// TODO: add options: grid, flow, etc
+        let photo_class = this.photos.length > 1? 'photo-square': 'photo-single';
+        return this.photos.map(p=>{
+            let url = this.prefix+p;
+            let thumb = url; // TODO: config
+            // photo_square class enforce the size
+            return `<div class="${photo_class}" data-src="${url}"><img class="center-cropped fullbox" src="${thumb}"></div>`;
+        }).join('');
+
+    }
+
+}
