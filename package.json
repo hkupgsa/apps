@@ -1,6 +1,6 @@
 {
   "name": "pgsa-apps",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Web Apps for HKUPGSA Website",
   "main": "index.html",
   "scripts": {

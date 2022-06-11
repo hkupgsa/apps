@@ -23,7 +23,7 @@
         <script src="/js/pgsa-apps.min.js"></script>
         <script>
             var _pg = _pg || {};
-            _pg.sec = 's'; _pg.ver = 'v1.1.1';
+            _pg.sec = 's'; _pg.ver = 'v1.2.0';
             _pg.refresh = false; // true; //
             _pg.purge = true;
             _pg.init &&  (_pg.ready = _pg.init()) &&  (_pg.enc['dummy'] = 'secret');
@@ -83,7 +83,7 @@
                 if(!!ajax_url){
                     _pg.log('auto load from sheet ...');
                     // async update after lazy load
-                    ajax(ajax_url).then((data)=>{
+                    fetch(ajax_url).then((resp)=>resp.text()).then((data)=>{
                         articles = ajax_callback(data).split(',');
                         articles = articles.filter((e,i,arr)=>arr.indexOf(e)==i);
                         _pg.log('obtained unique ', articles);

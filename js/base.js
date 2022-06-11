@@ -26,10 +26,6 @@ String.prototype.html = function(encode) {
     return str;
 };
 
-window.isInWeixinApp = function() {
-    return /MicroMessenger/.test(navigator.userAgent);
-};
-
 window.encF = function(plain, key){ // assuming string input
     if(!key){
         return plain;// skip
@@ -37,8 +33,10 @@ window.encF = function(plain, key){ // assuming string input
     return plain; // TODO: AES CBC
 }
 
+// @deprecated
 function ajax(url, method) {
     method = method || 'GET';
+    console.log('deprecated, use fetch instead');
 
 	// Create the XHR request
 	let request = new XMLHttpRequest();
@@ -76,8 +74,9 @@ function ajax(url, method) {
 };
 window.ajax = ajax;
 
-// TODO: proxify
+// @deprecated
 function ajaxPOST(obj){
+    console.log('deprecated, use fetch instead');
     let url   = obj.url;
     let xhr   = new XMLHttpRequest();
 
@@ -259,7 +258,7 @@ _pg.purgeStore = function(_ver){
 
 _pg.init = function(){
     _pg.sec = _pg.sec || 'h'; // default section home;
-    _pg.ver = _pg.ver || 'v1.1.0'; // default version 1; 
+    _pg.ver = _pg.ver || 'v1.2.0'; // default version 1; 
     _pg.enc = _pg.enc || {}; // encryption keys;
     _pg.sep = ":"; _pg.ver_sep = ".";
     _pg.now = opTime();
@@ -389,10 +388,10 @@ _pg.load_articles = async function (li, info, check_lock){
 _pg.parseArticle = function(data){
         let tmpDom = document.createElement('output');
         tmpDom.innerHTML = data;
-        let image_url = getMeta('twitter:image', tmpDom);
-        let title = getMeta('twitter:title', tmpDom);
-        let summary = getMeta('twitter:description', tmpDom);
-        let extra = {};
+        let image_url = getMeta('twitter:image', tmpDom),
+            title = getMeta('twitter:title', tmpDom),
+            summary = getMeta('twitter:description', tmpDom),
+            extra = {};
 
         function contains(s, t){
             return Array.prototype.filter.call(s, 
@@ -447,7 +446,7 @@ _pg.retrieveArticle = async function (fid, ttl){
         return new Promise((resolve)=>resolve(item));
     }
 
-    return ajax('/wx/'+fid).then(function(data){
+    return fetch('/wx/'+fid).then((resp)=>resp.text()).then((data)=>{
         _pg.log('retrieve article ', fid);
         item = _pg.parseArticle(data);
         if(!!item){
@@ -457,7 +456,7 @@ _pg.retrieveArticle = async function (fid, ttl){
         }
         return item;
         
-    }).catch(function(err){
+    }).catch((err)=>{
         console.log('fail to retrieve ', fid, err);
         return null;
     });

@@ -77,3 +77,11 @@
      };
      },10));
  };
+
+ /**
+ * 
+ * @returns {boolean} whether the current browser is weixin
+ */
+window.isInWeixinApp = function() {
+    return /MicroMessenger/.test(navigator.userAgent);
+};
