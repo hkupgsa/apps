@@ -137,6 +137,7 @@
                     if(!!mark_uno){
                         _uno = _uno.substr(0,5)+'XXXX'+_uno.substr(-1);
                     }
+                    // TODO: ensure_font_loaded
                     if(_pg.loaded_fonts[s.font.family]){
                         return _pg.drawMCard(canvas, s, {surname, given_name, uno:_uno, since_year, unverified}, {qr:_pg.qr, avatar: _pg.avatar});
                     }

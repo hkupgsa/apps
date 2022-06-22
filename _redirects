@@ -28,7 +28,7 @@
 /_/freebird/*	https://www.gstatic.com/_/freebird/:splat	200
 
 /p/:id	https://www.instagram.com/p/:id/?__a=1	200
-/u/:id	https://www.instagram.com/:id/?__a=1	200
+/u/:id	https://www.instagram.com/:id/channel/?__a=1	200
 
 /js/pgsa-config.js /js/pgsa-config-cn.js 200 Country=cn
 /js/pgsa-config.js /js/pgsa-config-en.js 200

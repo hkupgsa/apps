@@ -11,21 +11,6 @@ window.setPublishTime_new = function(e,t,n,i){ // t: publish_time, i: dom_elemen
     i && (i.innerText=u);
 };
 
-String.prototype.html = function(encode) {
-    var replace =["&#39;", "'", "&quot;", '"', "&nbsp;", " ", "&gt;", ">", "&lt;", "<", "&yen;", "¥", "&amp;", "&"];
-    var replaceReverse = ["&", "&amp;", "¥", "&yen;", "<", "&lt;", ">", "&gt;", " ", "&nbsp;", '"', "&quot;", "'", "&#39;"];
-    var target;
-    if (encode) {
-        target = replaceReverse;
-    } else {
-        target = replace;
-    }
-    for (var i=0,str=this;i< target.length;i+= 2) {
-         str=str.replace(new RegExp(target[i],'g'),target[i+1]);
-    }
-    return str;
-};
-
 window.encF = function(plain, key){ // assuming string input
     if(!key){
         return plain;// skip
@@ -128,11 +113,13 @@ window.ajaxPOST = ajaxPOST;
 
 
 function dataURItoBlob(dataURI) {
+    let [proto, content] = dataURI.split(',');
+
     // doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
-    let byteString = atob(dataURI.split(',')[1]);
+    let byteString = atob(content);
 
     // separate out the mime component
-    let mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0]
+    let mimeString = proto.split(':')[1].split(';')[0]
 
     // write the bytes of the string to an ArrayBuffer
     let ab = new ArrayBuffer(byteString.length);
@@ -146,14 +133,16 @@ function dataURItoBlob(dataURI) {
     }
 
     // write the ArrayBuffer to a blob, and you're done
-    var blob = new Blob([ab], {type: mimeString});
-    return blob;
+    return new Blob([ab], {type: mimeString});
 
   }
 
-
+/**
+ * see if DOM is already available
+ * @param {*} fn - function to execute
+ */
 function docReady(fn) {
-    // see if DOM is already available
+    // 
     if (document.readyState === "complete"
         || document.readyState === "interactive") {
         // call on next available tick
@@ -172,12 +161,12 @@ let _pg = window._pg;
 
 
 _pg.log = function(...args){
-    if(_pg.debug){
+    if(_pg.debug){ // silent if not debug
         console.log(...args);
     }
 }
 
-_pg.ajax = ajaxPOST; // TODO: promisify
+_pg.ajax = ajaxPOST; // @deprecated
 
 /* Usage: 
       (1) store(key) - get value
@@ -241,15 +230,17 @@ _pg.store = function(_key, value, _ttl, _enc){
     }
 }
 
+_pg.getVer = function(ver){
+    return ver.substr(1).split(_pg.ver_sep).map((e)=>parseInt(e));
+}
+
 _pg.purgeStore = function(_ver){
-    var storage = window.localStorage;
-    
-    let getVer = (ver)=> ver.substr(1).split(_pg.ver_sep).map((e)=>parseInt(e));
-    let cur = getVer(_ver);
+    let storage = window.localStorage;
+    let cur = _pg.getVer(_ver);
     Object.keys(storage).forEach((key)=>{
         let v = key.split(_pg.sep)[0];
-        if( getVer(v) < cur ){
-            console.log('purge old version', key);
+        if( _pg.getVer(v) < cur ){
+            console.log('purging storage of old version', key);
             storage.removeItem(key);
         }
         
@@ -258,7 +249,7 @@ _pg.purgeStore = function(_ver){
 
 _pg.init = function(){
     _pg.sec = _pg.sec || 'h'; // default section home;
-    _pg.ver = _pg.ver || 'v1.2.0'; // default version 1; 
+    _pg.ver = _pg.ver || 'v1.2.0'; // default version; 
     _pg.enc = _pg.enc || {}; // encryption keys;
     _pg.sep = ":"; _pg.ver_sep = ".";
     _pg.now = opTime();
@@ -272,7 +263,7 @@ _pg.init = function(){
 }
 
 _pg.allow_orders = [null, 'ascending', 'descending', 'keep'];
-// without jQuery
+// reorder element according to data attribute, without jQuery
 _pg.reorder = function(order, parent, sel, attr){
     // order in {null, latest, oldest}
     if(_pg.allow_orders.indexOf(order)<0){
@@ -282,7 +273,7 @@ _pg.reorder = function(order, parent, sel, attr){
     let eles = parent.querySelectorAll(sel);
     // TODO: deduplicate here? detect identical
     let vals = Array.prototype.map.call(eles,
-        (ele, i)=>[parseInt(ele.getAttribute('data-'+attr)),i]
+        (ele, i)=>[parseInt(ele.dataset[attr]),i]
     );
     _pg.log('before sorting: ',vals.slice());
     if(order == 'ascending'){
@@ -291,16 +282,13 @@ _pg.reorder = function(order, parent, sel, attr){
     }else if(order == 'descending'){
         vals.sort((a,b)=>b[0]-a[0]);
     }else{ // null, keep, ...
-        return false;
+        return false; // no change
     }
     _pg.log('sorted to ', vals);
     vals.forEach((e,i)=>{
         parent.appendChild(eles[e[1]]);
     });
     return true;
-
-
-
 }
 
 // without jQuery
@@ -315,8 +303,8 @@ _pg.one_card = function(arr){
     let link = "https://mp.weixin.qq.com/s/"+fid;
     let card = document.createElement('div');
     card.classList.add('panel', 'article-card');
-    card.setAttribute('data-t', extra.publish_time);
-    card.setAttribute('data-link', link);
+    card.dataset.t = extra.publish_time;
+    card.dataset.link = link;
     card.setAttribute('id', 's_' + fid);
     card.innerHTML = `
     <div class="panel-heading article-author">
@@ -406,10 +394,10 @@ _pg.parseArticle = function(data){
         let setting = contains(scripts, 'round_head_img');
         setting = setting.length? setting[0].innerHTML: '';
 
-        var re_publish = /var\s+\w+\s*=\s*"(\d+)",\s*\w+\s*="(\d+)",\s*\w+\s*=\s*"([^"]+)"/g;
-        var re_publish_new = /"(\d{10})"/g;
-        var re_logo = /var\s+round_head_img\s*=\s*"([^"]+)"/g;
-        var re_nickname = /var\s+nickname\s*=\s*"([^"]+)"/g;
+        //var re_publish = /var\s+\w+\s*=\s*"(\d+)",\s*\w+\s*="(\d+)",\s*\w+\s*=\s*"([^"]+)"/g;
+        let re_publish_new = /"(\d{10})"/g;
+        let re_logo = /var\s+round_head_img\s*=\s*"([^"]+)"/g;
+        let re_nickname = /var\s+nickname\s*=\s*"([^"]+)"/g;
         
         if(! image_url || !title || !summary){
             console.log('fail to retrieve ');
@@ -535,10 +523,6 @@ _pg.drawTicket = function(canvas, style, obj, canvases){
 
     bg.src = style.background.path;
     return true;
-
-    
-
-
 }
 
 _pg.drawMCard = function(canvas, style, obj, canvases){
@@ -627,136 +611,4 @@ _pg.saveCard = function(canvas, uno, pre){
         dataURItoBlob(canvas.toDataURL("image/jpeg")), 
         pre+uno+".jpg"
     );  
-}
-
-
-// Models
-
-// handling local image edit and upload
-_pg.Photo = class {
-    constructor(){
-        this.data = null;
-        this.type = null;
-        this.name = null;
-        this.url = null; // updated when uploaded
-        this.thumb = null;
-        this.dom_ele = null;
-    }
-    static upload_url = null;
-    set(data, type, name){
-        this.data = data;
-        this.type = type;
-        this.name = name;
-    }
-    get(){
-        return this.data;
-    }
-    upload(){ // TODO: notify when done
-        return new Promise((resolve, reject)=>{
-            if(!this.data){
-                reject("No data");
-                return;
-            }
-          
-            if(!this.name){
-                reject("No name");
-                return;
-            }
-            let formData = new FormData();
-            formData.append("file", this.data);
-            formData.append("filename", this.name);
-            _pg.ajax({
-                url: constructor.upload_url,
-                method: 'POST',
-                data: formData,
-            }).then(res=>{
-                this.url = res.url;
-                this.thumb = res.thumb; // thumbnail url
-                resolve(res);
-            }).catch(err=>{
-                reject(err);
-            });
-        });
-    }
-    pick(){ // should be inited with a dom element
-        return new Promise((resolve, reject)=>{
-            let input = document.createElement('input');
-            input.type = 'file';
-            input.accept = this.type;
-            input.onchange = (e)=>{
-                let file = e.target.files[0];
-                this.name = file.name;
-                this.data = file;
-                resolve(file);
-            }
-            input.click();
-        });
-    }
-    crop(x, y, w, h){
-        return new Promise((resolve, reject)=>{
-            if(!this.data){
-                reject("No data");
-                return;
-            }
-            let canvas = document.createElement('canvas');
-            canvas.width = w;
-            canvas.height = h;
-            let ctx = canvas.getContext('2d');
-            let img = new Image();
-            img.onload = ()=>{
-                ctx.drawImage(img, x, y, w, h, 0, 0, w, h);
-                this.data = canvas.toDataURL("image/jpeg");
-                resolve(this.data);
-            }
-            img.src = this.data;
-        });
-    }
-    fullscreen(){
-        if(!this.dom_ele){ // may use a common one
-            this.dom_ele = document.createElement('div'); // then add to DOM
-            this.dom_ele.addEventListener('click', (e)=>{
-                this.dom_ele.display = 'none';
-                e.stopPropagation();
-            });
-        }
-        this.dom_ele.display = 'block';
-        
-    }
-
-}
-
-_pg.Album = class {
-    constructor(){
-        this.prefix = '';
-        this.photos = [];
-        this.enabled = false;
-
-    }
-    addPhoto(photo){
-        if(_pg.Photo.prototype == photo.constructor){
-            this.photos.push(photo.url);
-        }else{
-            this.photos.push(photo);
-        }
-    }
-    getPhoto(uno){
-        return this.prefix + this.photos[uno];
-    }
-    getPhotos(){
-        return this.photos.map(p=>this.prefix+p);
-    }
-    getPhotoCount(){
-        return this.photos.length;
-    }
-    render(){// TODO: add options: grid, flow, etc
-        let photo_class = this.photos.length > 1? 'photo-square': 'photo-single';
-        return this.photos.map(p=>{
-            let url = this.prefix+p;
-            let thumb = url; // TODO: config
-            // photo_square class enforce the size
-            return `<div class="${photo_class}" data-src="${url}"><img class="center-cropped fullbox" src="${thumb}"></div>`;
-        }).join('');
-
-    }
-
 }

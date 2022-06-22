@@ -85,3 +85,23 @@
 window.isInWeixinApp = function() {
     return /MicroMessenger/.test(navigator.userAgent);
 };
+
+/**
+ * Decode escaped html to text content in place
+ * @param {boolean=} encode - encode or decode, default false 
+ * @returns the transformed string
+ */
+ String.prototype.html = function(encode=false) {
+    var replace =["&#39;", "'", "&quot;", '"', "&nbsp;", " ", "&gt;", ">", "&lt;", "<", "&yen;", "¥", "&amp;", "&"];
+    var replaceReverse = ["&", "&amp;", "¥", "&yen;", "<", "&lt;", ">", "&gt;", " ", "&nbsp;", '"', "&quot;", "'", "&#39;"];
+    var target;
+    if (encode) {
+        target = replaceReverse;
+    } else {
+        target = replace;
+    }
+    for (let i=0,str=this;i< target.length;i+= 2) {
+         str=str.replace(new RegExp(target[i],'g'),target[i+1]);
+    }
+    return this;
+};
