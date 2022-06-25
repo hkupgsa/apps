@@ -1,6 +1,7 @@
 // Utilities
 
 import "./weixin.js";
+import './elements.js';
 
 window.setPublishTime_new = function(e,t,n,i){ // t: publish_time, i: dom_element
     var o=new Date(1e3*(1*t));
@@ -20,8 +21,8 @@ window.encF = function(plain, key){ // assuming string input
 
 // @deprecated
 function ajax(url, method) {
+    console.warn('abandoned, use fetch instead');
     method = method || 'GET';
-    console.log('deprecated, use fetch instead');
 
 	// Create the XHR request
 	let request = new XMLHttpRequest();
@@ -61,7 +62,7 @@ window.ajax = ajax;
 
 // @deprecated
 function ajaxPOST(obj){
-    console.log('deprecated, use fetch instead');
+    console.warn('abandoned, use fetch instead');
     let url   = obj.url;
     let xhr   = new XMLHttpRequest();
 
@@ -306,23 +307,21 @@ _pg.one_card = function(arr){
     card.dataset.t = extra.publish_time;
     card.dataset.link = link;
     card.setAttribute('id', 's_' + fid);
-    card.innerHTML = `
-    <div class="panel-heading article-author">
-        <table><tbody><tr>
-        <td><img src="${extra.round_logo || ''}" style=""></td>
-        <td><span>${extra.nickname || ''}</span></td>
-        <td><span class="publish_time"></span></td>
-        </tr></tbody></table>
-    </div>
-    <div class="panel-body">
-        <div class="article-image">
-        <img src="${image_url.replace('http://', '//')}">
-        </div>
-        <div class="article-summary">
-        <h3>${title}</h3>
-        <p>${summary}</p>
-        </div>
-    </div>`;
+    
+    let e1 = `[".panel-heading.article-author",{},table,{},tbody,{},tr,{},[
+        [td,{},img,{src:"${extra.round_logo || ''}"},[]],
+        [td,{},span,{},"${extra.nickname || ''}"],
+        [td,{},[["span.publish_time"]]]
+    ]]`;
+    let e2 = `[".panel-body",{},[
+        [".article-image",{},img,{src:"${image_url.replace('http://', '//')}"},[]],
+        [".article-summary",{},[
+            [h3,{},"${title}"],
+            [p,{},"${summary}"]
+        ]]
+    ]]`;
+    card.appendChild(_pg.create_ele(e1));
+    card.appendChild(_pg.create_ele(e2));
     
 
     card.querySelector('.panel-body').addEventListener('click', ()=>{

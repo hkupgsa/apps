@@ -100,8 +100,9 @@ window.isInWeixinApp = function() {
     } else {
         target = replace;
     }
-    for (let i=0,str=this;i< target.length;i+= 2) {
+    let i, str;
+    for (i=0,str=this;i< target.length;i+= 2) {
          str=str.replace(new RegExp(target[i],'g'),target[i+1]);
     }
-    return this;
+    return str; // not inplace
 };
