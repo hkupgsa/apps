@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Bootstrap Carousel</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
+        <style>
+            .carousel img{
+                position: relative;
+                width: 100%;
+                height: 100%;
+                object-position: center;
+                object-fit: cover;
+            }
+
+        </style> 
+    </head>
+
+    <body>
+        <div id="carousel_root" style="position: absolute; left:0; top: 0; width: 100%;"></div>
+        
+        <script src="/js/pgsa-apps.min.js"></script>
+        <script>
+            var _pg = _pg || {};
+            _pg.sec = 'c'; _pg.ver = 'v1.3.0';
+            _pg.refresh = false; // true; //
+            _pg.purge = true;
+            _pg.init &&  (_pg.ready = _pg.init()) &&  (_pg.enc['dummy'] = 'secret');
+
+            var params = getQueryFromURL(location.href, decodeURIComponent);
+            const cr = _pg.carousel = {}
+            cr.json = params.json? JSON.parse(params.json) : null
+            cr.read_url = (params.read || '/ajax?q=banner');
+            cr.aspect = (params.aspect || '16:9').split(':');
+            cr.interval = parseInt(params.interval) || 5000;
+            cr.def = "len,img,link,caption".split(',');
+
+            function make_carousel(root, data){
+                _pg.log(data.items, data.prefix);
+                const prefix = data.prefix;
+                const items = [], indicators = [];
+                const style = `width: 100vw; height: calc(100vw / ${cr.aspect[0]} * ${cr.aspect[1]});`;
+                data.items.forEach((row, ii)=>{
+                    const caption = row[3]? `<div class="carousel-caption d-none d-md-block"><h3>${row[3]}</h3></div>`: '';
+                    const img_src = prefix + row[1];
+                    const onclick = row[2]? `onclick="window.open('${row[2]}','_blank');return false;"`: '';
+                    items.push(`<div style="${style}" class="carousel-item ${ii==0?'active':''}">
+                        <img src="${img_src}" class="d-block w-100" alt="${row[3]||''}" ${onclick}>
+                        ${caption}
+                    </div>`);
+                    indicators.push(`<button type="button" data-bs-target="#${root.id}" data-bs-slide-to="${ii}" ${ii==0?'class="active"':''}></button>`);
+                });
+                root.classList.add(...'carousel slide carousel-fade'.split(' '));
+                root.innerHTML = 
+`<div class="carousel-indicators">
+    ${indicators.join('')}
+  </div>
+    <div class="carousel-inner">
+${items.join('')}                    
+</div>
+<button class="carousel-control-prev" type="button" data-bs-target="#${root.id}" data-bs-slide="prev">
+    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+    <span class="visually-hidden">Previous</span>
+</button>
+<button class="carousel-control-next" type="button" data-bs-target="#${root.id}" data-bs-slide="next">
+    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+    <span class="visually-hidden">Next</span>
+</button>`;
+        return root;
+            } // Make Carousel
+           
+
+            if(_pg.ready){
+                
+                // do something
+                _pg.ready = function(){
+                    _pg.log('ready to do something');
+                    const root = cr.root = document.querySelector('#carousel_root');
+
+                    cr.json? new bootstrap.Carousel( make_carousel(root, cr.json), {interval: cr.interval, ride:'carousel'})  : 
+                    fetch(cr.read_url, {credentials: "include"}).then(resp=>resp.json()).catch(e=>console.log(e)).then(obj=>{
+                        if(obj.err==0 && obj.res){ //{items, prefix}    
+                            return new bootstrap.Carousel(make_carousel(root, obj.res), {interval: cr.interval, ride:'carousel'});
+                        }
+                        return null;
+                    });
+
+
+                }
+                
+                
+
+            }
+            
+
+            docReady(() => {
+                typeof _pg.ready == 'function' && _pg.ready();
+            });
+        </script>
+
+    </body>
+</html>
