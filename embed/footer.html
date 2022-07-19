@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Vue Footer</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js" integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p" crossorigin="anonymous"></script>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vue@2.7.0/dist/vue.min.js"></script>
+        <style>
+            :root {
+                --nav-green: #60BE00;
+                --bg-white: #FFFFFF;
+                --fg-dark: #000000;
+                --white-transparent: rgba(255,255,255,0);
+                --container-width: min(600px, 100vw); /* full width no larger than 600px */
+            }
+            footer {
+                background-color: var(--nav-green);
+                width: 100%;
+            }
+            footer a{
+                text-decoration: none;
+                color: black;
+            }
+            html, body {
+                background-color: var(--bg-white);
+                height: 100%;
+                width: 100%;
+                padding: 0;
+            }
+
+        </style>
+    </head>
+
+    <body>
+        <div class="container-fluid" id="vue_root">
+          <footer-pg :read_url="read_url" :read_json="read_json"></footer-pg>
+
+
+        </div>
+        <script src="/js/pgsa-apps.min.js"></script>
+        <script>
+            var _pg = _pg || {};
+            _pg.sec = 'c'; _pg.ver = 'v1.3.0';
+            _pg.refresh = false; // true; //
+            _pg.purge = true;
+            _pg.init &&  (_pg.ready = _pg.init()) &&  (_pg.enc['dummy'] = 'secret');
+
+            var params = getQueryFromURL(location.href, decodeURIComponent);
+            const ft = _pg.footer = {};
+            ft.json = params.json? JSON.parse(params.json) : null;
+            ft.read_url = (params.read || '/ajax?q=menu&scope=footer');
+
+            if(_pg.ready){
+                
+                // do something
+                _pg.ready = function(){
+                    _pg.log('ready to do something');
+                }
+
+                Vue.component('dropup-pg', {
+                    template: `<div v-for="menu in menus" class="dropup" style="display: inline;">
+                          <button class="btn dropdown-toggle" data-bs-toggle="dropdown">
+                            <i v-if="menu.title_icon" :class="'fas '+menu.title_icon"></i>
+                            {{menu.title}}
+                            </button>
+                          <ul class="dropdown-menu dropdown">
+                            <li v-for="item in menu.items" class="dropdown-item">
+                                <a :href="item.link || item[1]">{{item.text || item[0]}}</a>
+                            </li>
+                          </ul>  
+                          </div> `,
+                    data(){return {};},
+                    props: ['menus'],
+                    computed:{
+
+                    }
+                });
+
+                Vue.component('address-pg', {
+                    template: `<a target="_blank" :href="address.map_link || '#'" v-html="rawHTML"></a>`,
+                    data(){ return {};},
+                    props: ['address'],
+                    computed:{
+                        rawHTML(){
+                            return this.address.address.join('<br>');
+                        }
+                    }
+                });
+               
+                Vue.component('copyright-pg',{
+                    template:`<div class="copyright">
+                        Copyright &copy; {{ copyright.copyright_years || '' }} <br> 
+                       <span v-html="copyright.copyright_author || ''"></span> 
+                <small v-if="copyright.authors"> <br> Designed by &nbsp;
+                    <template v-for="(v, k, ii) in copyright.authors">
+                        <a :href="'mailto:'+v">{{k}}</a> &nbsp;
+                        <template v-if="ii != author_len-1"> &amp;&nbsp; </template>
+                    </template>
+                </small> </div>`,
+                    props: ['copyright'],
+                    data(){
+                        return {
+                        }
+                    },
+                    computed:{
+                        author_len(){
+                            let authors = this.copyright.authors;
+                            return authors? Object.keys(authors).length: 0;
+                        }
+                    }
+
+                });
+                Vue.component('footer-pg',{
+                    template:`<footer class="container-fluid px-0 d-flex justify-content-between align-items-stretch align-self-center flex-md-row">
+                        <section class="footer-left px-2 pt-0">
+                            <dropup-pg :menus="left"></dropup-pg>
+                        </section>
+                        <section class="footer-middle px-2 pt-0">
+                            <address-pg :address="middle"></address-pg>
+                        </section>
+                        <section class="footer-right px-2 pt-0">
+                          <copyright-pg :copyright="right"></copyright-pg>    
+                        </section>
+                        </footer>`,
+                    props: ['read_url', 'read_json'],
+                    data(){
+                        return {
+                            left: [{
+                                title: "Useful Links",
+                                title_icon: "fa-bookmark",
+                                items:[["HKU Homepage","https://www.hku.hk/"],["Portal","https://hkuportal.hku.hk/"],["CEDARS","https://www.cedars.hku.hk/"],["Sport Center","https://www.cse.hku.hk/"]]
+                            }],
+                            middle: {
+                                address: ['P407 Graduate House', 'No. 3 University Drive', 'The University of Hong Kong', 'Hong Kong'],
+                                map_link: "#"
+                            },
+                            right: {
+                                copyright_years: '2015-2021',
+                                copyright_author: '<a href="https://github.com/hkupgsa" target="_blank" style="text-decoration: none; color: blue;">Tech Support Office | HKU PGSA</a>',
+                                authors: {'Tom':'cs.pgsa@gmail.com', 'Jerry':'hkupgsa@outlook.com'}
+                            } 
+                        }
+                    },
+                    methods:{
+                        ajax(url){
+                            fetch(url, {credentials: "include"}).then(resp=>resp.json()).catch(e=>console.log(e)).then(obj=>{
+                            if(obj.err==0 && obj.res){
+                                // update ft.vue
+                                this.left = [obj.res.left_menu];
+                                this.middle = obj.res.middle;
+                                this.right = obj.res.right;
+                                return obj.res;
+                            }
+                            return null;
+                        });
+
+                        },
+                        update(json){
+                            this.left = [json.left_menu],
+                            this.middle = json.middle;
+                            this.right = json.right;
+                        }
+                    },
+                    mounted(){
+                        // call ajax update or 
+                        if(this.read_json) 
+                            this.update(JSON.parse(this.read_json));
+                        else if(this.read_url) 
+                            this.ajax(this.read_url);
+                    }
+                });
+                ft.vue = new Vue({el: '#vue_root', data(){
+                    return {read_json: ft.read_json, read_url: ft.read_url}
+                }, mounted(){
+                    ft.footer = this.$children[0]; //check
+                }
+                });
+
+                
+                
+            }
+            
+
+            docReady(() => {
+                typeof _pg.ready == 'function' && _pg.ready();
+            });
+        </script>
+
+    </body>
+</html>
