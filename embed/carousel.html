@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -41,7 +41,7 @@
                 _pg.log(data.items, data.prefix);
                 const prefix = data.prefix;
                 const items = [], indicators = [];
-                const style = `width: 100vw; height: calc(100vw / ${cr.aspect[0]} * ${cr.aspect[1]});`;
+                const style = `width: 100vw; aspect-ratio: ${cr.aspect[0]} / ${cr.aspect[1]};`;
                 data.items.forEach((row, ii)=>{
                     const caption = row[3]? `<div class="carousel-caption d-none d-md-block"><h3>${row[3]}</h3></div>`: '';
                     const img_src = prefix + row[1];

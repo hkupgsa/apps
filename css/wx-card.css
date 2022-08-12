@@ -183,6 +183,7 @@ width:80%;
 }
 .panel-body .article-image{
 width: 100%; 
+aspect-ratio: 2.35 / 1; /* wx cover photo dim */
 margin-left: auto; 
 margin-right: auto; 
 margin-bottom: 0%;
@@ -190,7 +191,10 @@ padding-bottom: 0%;
 }
 .article-image img{
 width: 100%;
+height: 100%;
 margin-bottom: 0%;
+object-fit: cover;
+object-position: center;
 }
 .article-summary{
 margin-top: -5%; 
