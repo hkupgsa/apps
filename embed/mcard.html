@@ -68,7 +68,17 @@
                         },
                         avatar: {
                             x: 40, y: 240,
-                            border: null
+                            size: 256,
+                            border: null,
+                            fill: 'rgba(255,255,255,0.95)'
+                        },
+                        badge: {
+                            max_num: 4,
+                            x: 30, y: 685,
+                            size: 125,
+                            x_sep: 25,
+                            border: null,
+                            fill: 'rgba(255,255,255,0.75)',
                         }
 
                     },
@@ -77,8 +87,14 @@
                         family: 'Halter',
                         path: '/css/card-HALTER.ttf'
                     },
-                    badge: {
-
+                    badge: { //preset
+                        '@facebook': 'https://hkupgsa.vercel.app/img/logo/facebook.png',
+                        '@wechat': 'https://hkupgsa.vercel.app/img/logo/wechat.png',
+                        '@hkupgsa': 'https://hkupgsa.vercel.app/img/logo/logo.jpg',
+                        '@arts': 'https://hkupgsa.vercel.app/img/society/arts/artshkupg_logo.png',
+                        '@ctcs': 'https://hkupgsa.vercel.app/img/society/ctcs/ctcs_logo.png',
+                        '@iepga': 'https://hkupgsa.vercel.app/img/society/iepga/iepga_logo.png',
+                        '@vedas': 'https://hkupgsa.vercel.app/img/society/vedasheartandsoul/vedasheartandsoulstudentsociety.png',
                     }
                 }
             }
@@ -100,7 +116,7 @@
             
             const heading = document.querySelector('.mcard h2');
             heading.innerHTML = _pg.heading;
-            let {surname, given_name, uno, since_year, style, qr, unverified, colorDark, avatar, check_uno, no_save, cors_token} = params;
+            let {surname, given_name, uno, since_year, style, qr, unverified, colorDark, avatar, badges, check_uno, no_save, cors_token} = params;
             var canvas = document.querySelector('.mcard-body canvas');
 
             
@@ -112,6 +128,10 @@
                     _pg.qr_obj = new QRCode(qr_wrapper, {text: qr, colorDark: colorDark || '#000000'});
                     _pg.qr = qr_wrapper.querySelector('canvas');
                     // QR code image data on qr_canvas
+                }
+                if(!!badges){
+                    badges = badges.split(',');
+                    console.log(badges);
                 }
                 
 
@@ -129,33 +149,39 @@
                 let s = _pg.card_styles[style];
                 _pg.log('using style ', style, s);
 
-                
-                
                 _pg.loaded_fonts = _pg.loaded_fonts || {};
+                function ensure_font_loaded(font){
+                    return new Promise((resolve)=>{
+                        if(_pg.loaded_fonts[font.family]){
+                            return resolve(true);
+                        }
+
+                        let css = document.createElement('style');
+                        css.innerHTML = `
+                        @font-face {
+                            font-family: '${font.family}';
+                            src: url('${font.path}');
+                            font-style: normal;
+                        }`;
+                        document.head.appendChild(css);
+                        // make sure fonts are loaded;
+                        document.fonts.load('30pt '+font.family).then(
+                            ()=> {
+                                _pg.loaded_fonts[font.family] = true;
+                                resolve(true);
+                            }
+                        );
+                        return;
+                    })
+                }
                 function drawMCard(s, mark_uno){
                     let _uno = String(uno);
                     if(!!mark_uno){
                         _uno = _uno.substr(0,5)+'XXXX'+_uno.substr(-1);
                     }
-                    // TODO: ensure_font_loaded
-                    if(_pg.loaded_fonts[s.font.family]){
-                        return _pg.drawMCard(canvas, s, {surname, given_name, uno:_uno, since_year, unverified}, {qr:_pg.qr, avatar: _pg.avatar});
-                    }
-                    let css = document.createElement('style');
-                    css.innerHTML = `
-                    @font-face {
-                        font-family: '${s.font.family}';
-                        src: url('${s.font.path}');
-                        font-style: normal;
-                    }`;
-                    document.head.appendChild(css);
-                    // make sure fonts are loaded
-                    document.fonts.load('30pt '+s.font.family).then(
-                        ()=> {
-                            _pg.loaded_fonts[s.font.family] = true;
-                            return _pg.drawMCard(canvas, s, {surname, given_name, uno:_uno, since_year, unverified}, {qr:_pg.qr, avatar: _pg.avatar});
-                        }
-                    );
+                    ensure_font_loaded(s.font).then(()=>{
+                        return _pg.drawMCard(canvas, s, {surname, given_name, uno:_uno, since_year, unverified}, {qr:_pg.qr, avatar: _pg.avatar, badges: _pg.badges});
+                    });
                 }
                 let mcard_foot = document.querySelector(".mcard-foot");
                 let checker = null; 
@@ -192,59 +218,97 @@
                     drawMCard(s, checker.checked);
                     
                 });
-
-                function drawAvatar(){
-                    return new Promise((resolve)=>{
-
-                        if(!avatar){
-                            return resolve(null);
-                        }
-
-                        const avatar_size = 256;
-                        let avatar_canvas = _pg.avatar = document.createElement('canvas');
-                        avatar_canvas.width = avatar_canvas.height = avatar_size;
-                        let ctx = avatar_canvas.getContext("2d");
-                        // check if image url
-                        if(cors_token && avatar.startsWith('http')){
-                            let avatar_url = avatar + 
-                            (avatar.split('?').length>1?"":"?") +
-                            "cors_token=" + cors_token + "&op_time=" + Date.now();// prevent cache
-                            // draw_image
-                            const abg = new Image();
-                            function draw_avatar(){
-                                let asize = abg.width<abg.height? abg.width: abg.height;
-                                let sx = (abg.width - asize) / 2 >> 0;
-                                let sy = (abg.height - asize) / 2 >> 0;
-                                ctx.drawImage(abg, sx, sy, asize, asize, 0, 0, avatar_size, avatar_size);
-                            }
-                            
-                            abg.onload = ()=>{
-                                draw_avatar();
-                                resolve(_pg.avatar);
-                            }
-                            if(!no_save){// required if need to export
-                                abg.crossOrigin = "Anonymous";
-                            }
-                            
-                            abg.src = avatar_url;
-                            return;
-                        }
-                        
-                        if(!!jdenticon){
-                            jdenticon.drawIcon(ctx, avatar, avatar_size);
-                            return resolve(_pg.avatar);   
-                        }  
-                        
-                        return resolve(null);   
-
-                    });
+                function center_draw(abg, ctx, size){
+                    let asize = abg.width<abg.height? abg.width: abg.height;
+                    let sx = (abg.width - asize) / 2 >> 0;
+                    let sy = (abg.height - asize) / 2 >> 0;
+                    ctx.drawImage(abg, sx, sy, asize, asize, 0, 0, size, size);
                 }
 
+                function drawBadge(img_src, s){ // resolve to canvas with image loaded
+                    return new Promise((resolve,reject)=>{
+                        if(!img_src){// no image
+                            return resolve(null);
+                        }
+                        // depend on initial style (no further change)
+                        if(img_src.startsWith('@')){
+                            img_src = s.badge[img_src] || img_src;
+                        }
+                        let badge_size = s.pos.badge.size;
+                        let badge_canvas = document.createElement('canvas');
+                        let ctx = badge_canvas.getContext("2d");
+                        badge_canvas.width = badge_canvas.height = badge_size;
+
+                        // draw_image
+                        const abg = new Image();
+                        if(!no_save){// required if need to export
+                            abg.crossOrigin = "Anonymous";
+                        }
+                        abg.onload = ()=>{
+                            center_draw(abg, ctx, badge_size);
+                            resolve(badge_canvas);
+                        }
+                        
+                        abg.src = img_src;
+                        return;
+                    });
+
+                }
+                let loadBadges = Promise.all((badges || []).map(e=>drawBadge(e, s))).then((c)=>{
+                    return _pg.badges = c;
+                }).catch((err)=>{
+                    //mcard_foot.innerHTML = err;
+                    return null;
+                });
+
+                let loadAvatar =  new Promise((resolve)=>{
+
+                    if(!avatar){
+                        return resolve(null);
+                    }
+
+                    let avatar_size = s.pos.avatar.size;
+                    let avatar_canvas = document.createElement('canvas');
+                    avatar_canvas.width = avatar_canvas.height = avatar_size;
+                    let ctx = avatar_canvas.getContext("2d");
+                    // check if image url
+                    if(cors_token && avatar.startsWith('http')){
+                        let avatar_url = avatar + 
+                        (avatar.split('?').length>1?"":"?") +
+                        "cors_token=" + cors_token + "&op_time=" + Date.now();// prevent cache
+                        // draw_image
+                        let abg = new Image();
+                        
+                        abg.onload = ()=>{
+                            center_draw(abg, ctx, avatar_size);
+                            resolve(avatar_canvas);
+                        }
+                        if(!no_save){// required if need to export
+                            abg.crossOrigin = "Anonymous";
+                        }
+                        
+                        abg.src = avatar_url;
+                        return;
+                    }
+                    
+                    if(!!jdenticon){
+                        jdenticon.drawIcon(ctx, avatar, avatar_size);
+                        return resolve(avatar_canvas);   
+                    }  
+                    
+                    return resolve(null);// skip   
+
+                }).then(c=>{
+                    console.log(c);
+                    return _pg.avatar = c;
+                });
                 
-                drawAvatar().then(()=>{
+
+                
+                Promise.all([loadAvatar, loadBadges]).then(()=>{
                     drawMCard(s, checker && checker.checked);
                 }).catch((err)=>{
-                    console.log('failed to load avatar.', err);
+                    console.log('failed to load avatar or badges.', err);
                     drawMCard(s, checker && checker.checked);
                 });
                 

@@ -19,6 +19,7 @@ window.encF = function(plain, key){ // assuming string input
     return plain; // TODO: AES CBC
 }
 
+
 // @deprecated
 function ajax(url, method) {
     console.warn('abandoned, use fetch instead');
@@ -160,6 +161,10 @@ window.docReady = docReady;
 window._pg = window._pg || {}; // config object
 let _pg = window._pg;
 
+_pg.random_salt = function(len){// len <= 13
+    let salt = Math.random().toString(36); //10 digits+ 26 letters
+    return salt.substring(salt.length-len);
+}
 
 _pg.log = function(...args){
     if(_pg.debug){ // silent if not debug
@@ -526,7 +531,7 @@ _pg.drawTicket = function(canvas, style, obj, canvases){
 
 _pg.drawMCard = function(canvas, style, obj, canvases){
     let {surname, given_name, uno, since_year, unverified} = obj || {};
-    let {qr, avatar} = canvases || {};
+    let {qr, avatar, badges} = canvases || {};
     
     _pg.log(`generating membership card for ${given_name} ${surname} of ID ${uno} since year ${since_year}`);
     let bg = new Image();
@@ -577,14 +582,39 @@ _pg.drawMCard = function(canvas, style, obj, canvases){
             
         }
         if(!!avatar){
-            const avatar_size = 256;
+            const avatar_size = style.pos.avatar.size;
+            let cur_x = style.pos.avatar.x, cur_y = style.pos.avatar.y;
+            if(!!style.pos.avatar.fill){
+                ctx.fillStyle=style.pos.avatar.fill;
+                ctx.fillRect(cur_x, cur_y, 
+                    avatar_size, avatar_size);
+            }
             if(!!style.pos.avatar.border){
                 ctx.strokeStyle='white';
-                ctx.strokeRect(style.pos.avatar.x-1, style.pos.avatar.y-1, 
+                ctx.strokeRect(cur_x-1, cur_y-1, 
                     avatar_size+2, avatar_size+2);
             }
             ctx.drawImage(avatar, style.pos.avatar.x, style.pos.avatar.y);
-
+        }
+        if(!!badges){
+            const num_badge = badges.length;
+            const badge_size = style.pos.badge.size;
+            
+            let cur_x = style.pos.badge.x, cur_y = style.pos.badge.y;
+            badges.slice(0, style.pos.badge.size || num_badge).forEach((badge)=>{
+                if(!!style.pos.badge.border){
+                    ctx.strokeStyle='white';
+                    ctx.strokeRect(cur_x-1, cur_y-1, 
+                        badge_size+2, badge_size+2);
+                }
+                if(!!style.pos.badge.fill){
+                    ctx.fillStyle=style.pos.badge.fill;
+                    ctx.fillRect(cur_x, cur_y, 
+                        badge_size, badge_size);
+                }
+                ctx.drawImage(badge, cur_x, cur_y);
+                cur_x += style.pos.badge.x_sep + badge_size;
+            });
         }
         if(!!unverified){
             // Red Not Verified
