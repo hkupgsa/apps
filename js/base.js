@@ -402,7 +402,7 @@ _pg.parseArticle = function(data){
         //var re_publish = /var\s+\w+\s*=\s*"(\d+)",\s*\w+\s*="(\d+)",\s*\w+\s*=\s*"([^"]+)"/g;
         let re_publish_new = /oriCreateTime\s*=\s*'(\d{10})'/g; // changed from " to ' (single quotes)
         let re_logo = /var\s+round_head_img\s*=\s*"([^"]+)"/g;
-        let re_nickname = /var\s+nickname\s*=\s*"([^"]+)"/g;
+        let re_nickname = /var\s+nickname\s*=\s*(?:htmlDecode\()?"([^"]+)"/g; // forget group
         
         if(! image_url || !title || !summary){
             console.log('fail to retrieve ');
