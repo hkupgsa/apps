@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">  
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Login Demo</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
+        <link type="text/css" rel="stylesheet" href="/css/wx-card.css"> 
+        
+    </head>
+    <body>
+        
+        <div class="container">
+        <h2 id="group_name"> Inner Group </h2>
+            
+            <div id="top_right_menu" >
+                <button id="login_init" data-bs-toggle="modal" data-bs-target="#modal_login">Login via PGSA</button>
+                <span id="nickname">Guest</span>
+            </div>
+            
+          <div id="modal_login" class="modal" tabindex="-1">
+            <div class="modal-dialog"><div class="modal-content">
+                
+              <div class="modal-header">
+                <h4 class="modal-title">Login via PGSA</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div> <!-- header -->
+              <div class="modal-body">
+                <form method="POST" action="//L5.pgsa.hku.life/ajax/gu/17/login">
+                    <input type="hidden" name="_token" value="">
+                    <label for="hku_email">Email</label>
+                    <input name="hku_email" type="text">
+                    <label for="password">Password</label>
+                    <input name="password" type="password">
+                </form>
+                  <p> <a href="#"> Forgot Password> </a> </p>
+              </div> <!-- modal body -->
+              <div class="modal-footer">
+                  <button type="submit" class="btn btn-primary">Login </button>
+              </div> <!-- footer -->
+            </div></div> <!-- dialog -->
+          </div> <!-- modal -->
+            
+            
+            
+        </div>
+        
+        <script src="/js/pgsa-apps.min.js"></script>
+        
+        <script>
+            var opts = {}; 
+            var params = getQueryFromURL(location.href, decodeURIComponent);
+            var ajax_prefix = "//www.pgsa.hku.hk/ajax";
+            if(window.location.origin.match(/.*\.pgsa\.hku\.life/)){
+                ajax_prefix = "//L5.pgsa.hku.life/ajax"; // for dev testing
+            }
+            let {group_id} = params;
+            let ajax_target = `${ajax_prefix}/gu/${group_id || "17"}/login`
+            docReady(() => {
+               console.log("Testing third-party login via PGSA at "+ajax_prefix); 
+               document.querySelector('#modal_login form').action = ajax_target;
+                
+                
+               fetch(ajax_target, {method: "POST"}).then(e =>e.json()).then(e=>{
+                   document.querySelector('#modal_login input[name="_token"]').value = opts["X-CSRF-Token"] = e.res.csrf;;
+                   
+               });
+                
+                 _pg.ajaxForm("modal_login", (resp)=>{
+                       console.log(resp);
+                     if(resp.res && resp.res.name && resp.res.group){
+                         document.querySelector("#nickname").innerHTML=resp.res.name;
+                         document.querySelector("#group_name").innerHTML = resp.res.group;
+                     }
+
+                 }, opts);
+              
+               
+                
+                
+            });
+            
+        </script>
+        
+    </body>
+</html>

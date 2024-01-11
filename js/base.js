@@ -115,6 +115,39 @@ function ajaxPOST(obj){
 window.ajaxPOST = ajaxPOST;
 
 
+// use button for submit; wrap form,button in div#form_id
+// callback style
+function form_ajax(form_id, func, headers){
+    let ajax_form = document.querySelector(`#${form_id} form`);
+    let target = ajax_form.action;
+    var headers = headers || {};
+    // set-up form
+    let btn = document.querySelector(`#${form_id} button[type="submit"]`);
+    btn.addEventListener('click', (e)=>{
+        //console.log(data);
+        fetch(target, {
+            method: 'POST',
+            headers: headers,
+            body: new FormData(ajax_form),
+        }).then((resp)=>resp.json()).then((obj)=>{
+            //console.log(obj);
+                try{
+                    return func && func(obj);
+                }catch(err){
+                    console.log(err);
+                    return err;
+                }
+        }).catch(err =>{
+            console.log(err);
+            return err;
+        });
+        e.preventDefault();// prevent default form submit
+    });    
+
+}
+
+
+
 function dataURItoBlob(dataURI) {
     let [proto, content] = dataURI.split(',');
 
@@ -174,6 +207,7 @@ _pg.log = function(...args){
 }
 
 _pg.ajax = ajaxPOST; // @deprecated
+_pg.ajaxForm = _pg.form_ajax = form_ajax; // callback style
 
 /* Usage: 
       (1) store(key) - get value
