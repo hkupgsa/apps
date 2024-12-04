@@ -332,7 +332,7 @@ _pg.reorder = function(order, parent, sel, attr){
     return true;
 }
 
-// without jQuery
+// one article card; DOM ops without jQuery
 _pg.one_card = function(arr){
     
     if(!arr || arr.length != 5){
@@ -348,6 +348,7 @@ _pg.one_card = function(arr){
     card.dataset.link = link;
     card.setAttribute('id', 's_' + fid);
     
+    // see elements.js for conversion implimentation
     let e1 = `[".panel-heading.article-author",{},table,{},tbody,{},tr,{},[
         [td,{},img,{src:"${extra.round_logo || ''}"},[]],
         [td,{},span,{},"${extra.nickname || ''}"],
@@ -375,13 +376,14 @@ _pg.one_card = function(arr){
 
 }
 
-// without jQuery
+// DOM ops without jQuery; 
+// set check_lock=true if lazy loaded from predefined list of articles, which will be aborted once another loading (from updated list) is initiated
 _pg.load_articles = async function (li, info, check_lock){
     // callback
     let t0 = opTime(1);
     // remove old articles if any
     if(!check_lock){ // not lazy loading
-        _pg.lazy_lock = true; // lock unfinished lazy loading
+        _pg.lazy_lock = true; // abort unfinished lazy loading
         _pg.log('remove lazy added nodes');
         li.querySelectorAll('.article-card').forEach(e=>e.parentNode.removeChild(e));
     }
@@ -394,7 +396,11 @@ _pg.load_articles = async function (li, info, check_lock){
                 if(check_lock && _pg.lazy_lock){
                     console.log('abort lazy loading');
                     return false; 
-                } // there may still be race condition here ...
+                } 
+                // there may still be race condition here ... 
+                // e.g. (1) one lazy_loading pass lock check; 
+                // (2) updated_loading set lock and finish removing lazy loaded cards; 
+                // (3) lazy_loading add one card (escaped the removal) although later lazy_loading aborted
                 li.appendChild(card);
             }
 
@@ -437,8 +443,9 @@ _pg.parseArticle = function(data){
         let re_publish_new = /oriCreateTime\s*=\s*'(\d{10})'/g; // changed from " to ' (single quotes)
         let re_logo = /var\s+round_head_img\s*=\s*"([^"]+)"/g;
         let re_nickname = /var\s+nickname\s*=\s*(?:htmlDecode\()?"([^"]+)"/g; // forget group
-        
-        if(! image_url || !title || !summary){
+        // empty summary is valid but will fail here. TODO: fix
+        if(!image_url || !title || !summary){ 
+            
             console.log('fail to retrieve ');
             _pg.log(html);
             return null;
@@ -469,15 +476,17 @@ _pg.retrieveArticle = async function (fid, ttl){
     let item = _pg.store(fid);
     if(item != null){
         _pg.log('reuse local ', fid);
-        return new Promise((resolve)=>resolve(item));
+        // wrapped in Promise for chaining
+        return new Promise((resolve)=>resolve(item)); 
     }
 
+    // request the url intended for bypassing CORS
     return fetch('/wx/'+fid).then((resp)=>resp.text()).then((data)=>{
         _pg.log('retrieve article ', fid);
         item = _pg.parseArticle(data);
         if(!!item){
             item.unshift(fid);
-            _pg.store(fid, item, ttl);// forever
+            _pg.store(fid, item, ttl);
             console.log('successfully retrieved ', fid);
         }
         return item;

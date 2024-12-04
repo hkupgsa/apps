@@ -2,25 +2,30 @@ let _pg = window._pg = window._pg || {}
 _pg.self_closing_tags = 'br,hr,img,input,meta,link,col,source'.split(',');
 _pg.pairing_tags = 'div,ol,ul,li,i,a,label,button,select,option,span,form,table,tbody,tr,th,td,nav,footer,script,style,audio,video,canvas,svg,article,section,aside,title,p,h1,h2,h3,h4,h5,markdown,strong'.split(',');
 
-// decompose selector
+// decompose selector str (e.g. TAG#ID.CLASS) to obj {tag, id, class}
 function decomp_selector(sel){
     let ret = {};
+    // tagName until sharp or dot
     let m1 = sel.match(/^[^#\.]+/);
     if(!m1){
         ret.tag = 'div'; // can be omitted
     }else{
         ret.tag = m1[0];
     }
+    // id starts with sharp
     let m2 = sel.match(/#[^#\.]+/);
     if(m2){
         ret.id = m2[0].substr(1);
     }
+    // className starts with dot
     let m3 = [...sel.matchAll(/\.[^#\.]+/g)];
     if(m3.length > 0){
+        // remove dots
         ret.class = m3.map(e=>e[0].substr(1)).join(' ');
     }
     return ret;
 }
+// compose selector str from obj {tag, id, class}
 function comp_selector(d){
     let ret = d.tag;
     if(d.class){
@@ -32,12 +37,18 @@ function comp_selector(d){
     return ret;
 }
 
+
+// predefined tagged template literals for string interpolation 
+
+// usage: _pg.tr`comments ${row_data} attr1=sth1 attr2=sth2 ${ref1} attr3=sth3 attr4=sth4 ${ref2}`
 function tagged_template_TABLEROW(strings, ...values){
-    const row = values[0];
+    // string[0] is ommitted, or use for comments
+    const row = values[0]; // leave blank if directly supplied in later values
     let ret = '';
     for(let ii=1;ii<values.length;++ii){
         let val = values[ii];
         let attr = strings[ii].trim();
+        // use val=[ref] to refer to the value row[ref]
         if(Array.isArray(val)){
             attr = (attr + ` data-col="${val}"`).trim();
             val = row[val[0]];
@@ -47,8 +58,9 @@ function tagged_template_TABLEROW(strings, ...values){
     return ret;
 }
 _pg.tr = tagged_template_TABLEROW;
+
+// usage: _pg.ds`#form_login ${row_id}row ${col_id}col`
 function tagged_template_DATASEL(strings, r, c){
-    // e.g. tt`#form_login ${row_id}row ${col_id}col`
     return `${strings[0].trim()} tr[data-${strings[1].trim()}="${r}"] td[data-${strings[2].trim()}="${c}"]`;
 }
 _pg.ds = tagged_template_DATASEL;
@@ -57,8 +69,8 @@ function tagged_template_DATAELE(strings, ...values){
 }
 _pg.de = tagged_template_DATAELE;
 
+// arr.length = 2n+1; transfromed to size-3 with remaining elements nested in the tail
 function nest_from_straight(arr){
-    // arr.length = 2n+1
     let ret = [];
     let cur = ret;
     for(let ii=1;ii<arr.length;ii+=2){
@@ -68,23 +80,27 @@ function nest_from_straight(arr){
         }else{
             cur.push([[]]);
         }
-        cur = cur[2][0]; // single child node
+        // move on to the tail's single child node
+        cur = cur[2][0];
     }
     return ret;
 }
-// render DOM element
+// render DOM elements from a condensed string
 function create_ele(obj){
+    // destructing assignment
     let [br,hr,img,input,meta,link,col,source] = _pg.self_closing_tags;
     let [div,ol,ul,li,i,a,label,button,select,option,span,form,table,tbody,tr,th,td,nav,footer,script,style,audio,video,canvas,svg,article,section,aside,title,p,h1,h2,h3,h4,h5,markdown,strong] = _pg.pairing_tags;
     let all_tags = _pg.self_closing_tags.concat(_pg.pairing_tags);
     
     if(typeof obj == 'string'){
+        // str -> variable corresponding to the specified str, otherwise should be quoted
         obj = eval(obj);
         if(typeof obj == 'string' && all_tags.includes(obj)){
             obj = [obj];
         }
     }// unquoted tag converted
 
+    // not become array in the previous step
     if(typeof obj == 'string'){
         // string -> textContent
         return document.createTextNode(obj);
@@ -93,7 +109,7 @@ function create_ele(obj){
         obj = nest_from_straight(obj);
     }
     
-    // real render, recursively
+    // real render func for [tag, attr, nodes], recursively
     function render(tag, attr={}, nodes=[]){
         let d = decomp_selector(tag);
         let ele = document.createElement(d.tag);
